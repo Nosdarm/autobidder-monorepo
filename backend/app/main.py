@@ -1,6 +1,10 @@
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.requests import Request # Add Request for slowapi
+from slowapi import Limiter, _rate_limit_exceeded_handler # Add slowapi imports
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from app.database import engine, Base
 from app.config import settings # Import settings
@@ -19,6 +23,11 @@ from app.routers.autobidder.logs                  import router as autobid_logs_
 from app.routers.ai.prompts                       import router as ai_prompts_router
 
 app = FastAPI(debug=settings.APP_DEBUG) # Use settings
+
+# Initialize Limiter for rate limiting
+limiter = Limiter(key_func=get_remote_address, default_limits=["5/minute"])
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS
 app.add_middleware(

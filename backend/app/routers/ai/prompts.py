@@ -1,7 +1,8 @@
 # backend/app/routers/ai/prompts.py
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request # Add Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.main import limiter # Import the limiter instance from main.py
 # Используем ваш путь импорта get_db
 from app.database import get_db
 # Используем ваш путь импорта ORM Модели
@@ -140,6 +141,35 @@ async def preview_prompt(
             detail=f"Prompt template with id '{request.prompt_id}' not found",
         )
     full_text = f"{stored.prompt_text}\n\n{request.description}"
+    try:
+        generated = await generate_preview(full_text)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"AI service error: {e}"
+        )
+    return PromptResponse(preview=generated)
+
+
+# Applying rate limit to the existing POST /preview endpoint.
+# This endpoint uses generate_preview.
+@router.post("/preview", response_model=PromptResponse) # Original endpoint
+@limiter.limit("5/minute") # Apply rate limit
+async def preview_prompt( # Kept original name, added fastapi_request
+    request_data: PromptRequest, # Original body parameter
+    fastapi_request: Request, # Add FastAPI Request for rate limiter
+    db: AsyncSession = Depends(get_db),
+):
+    # Для интереса
+    print(
+        f"--- [API preview_prompt] Received db session with id: {id(db)} ---") # Log adjusted
+    stored = await db.get(ORMPrompt, request_data.prompt_id)
+    if not stored:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Prompt template with id '{request_data.prompt_id}' not found",
+        )
+    full_text = f"{stored.prompt_text}\n\n{request_data.description}"
     try:
         generated = await generate_preview(full_text)
     except Exception as e:
