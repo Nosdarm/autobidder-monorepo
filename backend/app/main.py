@@ -21,6 +21,7 @@ from app.routers.templates.shared_templates_routes import router as shared_templ
 from app.routers.autobidder.autobidder_routes     import router as autobidder_router
 from app.routers.autobidder.logs                  import router as autobid_logs_router
 from app.routers.ai.prompts                       import router as ai_prompts_router
+from app.routers import websockets as ws_router # Import WebSocket router
 
 app = FastAPI(debug=settings.APP_DEBUG) # Use settings
 
@@ -57,6 +58,7 @@ app.include_router(shared_templates_router, prefix="/templates",       tags=["Sh
 app.include_router(autobidder_router,       prefix="/autobidder",      tags=["Autobidder"])
 app.include_router(autobid_logs_router,     prefix="/autobidder/logs", tags=["Autobidder Logs"])
 app.include_router(ai_prompts_router,       prefix="/ai",              tags=["AI Prompts"])
+app.include_router(ws_router.router,        prefix="/ws",              tags=["WebSockets"]) # Include WebSocket router
 
 # Лог всех маршрутов
 def _log_routes():

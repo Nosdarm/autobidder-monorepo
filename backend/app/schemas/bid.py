@@ -19,5 +19,6 @@ class BidResponse(BaseModel):
     job_id: str
     amount: float
     submitted_at: datetime
+    status: str # Added status field
 
     model_config = {"from_attributes": True}  # Pydantic V2

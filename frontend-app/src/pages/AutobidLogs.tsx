@@ -1,6 +1,6 @@
 import AIScoreChart from './AIScoreChart';
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../lib/axios'; // Updated axios import
 import { useParams } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -12,25 +12,29 @@ type Log = {
   id: number;
   job_title: string;
   job_link: string;
-  bid_text: string;
+  bid_text?: string | null; // Align with backend Optional[str]
   status: string;
-  created_at: string;
+  created_at: string; // Or Date if parsed, but string is fine from JSON
+  // profile_id, error_message etc. from AutobidLogOut can be added if needed by UI
 };
 
 const AutobidLogs: React.FC = () => {
-  const { profileId } = useParams();
+  const { profileId } = useParams<{ profileId: string }>(); // Typed profileId
   const [logs, setLogs] = useState<Log[]>([]);
   const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'error'>('all');
   const [daysFilter, setDaysFilter] = useState<number>(7);
   const [chartData, setChartData] = useState<{ date: string; count: number }[]>([]);
+  const [error, setError] = useState<string | null>(null); // Added error state
 
   useEffect(() => {
     if (!profileId) return;
+    setError(null); // Clear previous errors
 
-    axios.get(`/logs/${profileId}`).then(res => {
-      let filtered = res.data as Log[];
+    api.get<Log[]>(`/autobidder/logs/${profileId}`) // Use api instance, updated path, generic type
+      .then(res => {
+        let filtered = res.data; // Type is already Log[] due to generic
 
-      if (statusFilter !== 'all') {
+        if (statusFilter !== 'all') {
         filtered = filtered.filter(log => log.status === statusFilter);
       }
 
@@ -63,12 +67,18 @@ const AutobidLogs: React.FC = () => {
         .map(([date, count]) => ({ date, count }));
 
       setChartData(chart);
+    })
+    .catch(err => {
+      console.error("Ошибка загрузки логов:", err);
+      setError("Не удалось загрузить логи. Пожалуйста, попробуйте позже.");
     });
   }, [profileId, statusFilter, daysFilter]);
 
   return (
     <div className="p-4 max-w-5xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">Логи авто-биддера для профиля #{profileId}</h2>
+      
+      {error && <div className="text-red-500 mb-4 p-2 border border-red-300 rounded">{error}</div>}
 
       <div className="flex gap-4 mb-6 items-center">
         <label>

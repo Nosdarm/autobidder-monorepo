@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from '../lib/axios'; // Updated axios import
+import { AxiosError } from 'axios'; // For type checking
 
 const EmailVerify = () => {
   const [message, setMessage] = useState("Проверяем токен...");
@@ -15,24 +16,28 @@ const EmailVerify = () => {
       return;
     }
 
-    axios
-      .get(`http://localhost:8000/auth/verify-email?token=${token}`)
+    // Backend endpoint is /auth/verify (not /auth/verify-email)
+    api.get(`/auth/verify?token=${token}`) 
       .then((res) => {
         setSuccess(true);
-        setMessage(res.data.message);
+        setMessage(res.data.message || "Email успешно подтвержден!"); // Use message from response or a default
 
-        // Автоматический вход после подтверждения (опционально)
-        if (res.data.token) {
-          localStorage.setItem("token", res.data.token);
-        }
+        // Backend /auth/verify currently doesn't return a new token for auto-login.
+        // If it did, this logic would be fine.
+        // if (res.data.access_token) { 
+        //   localStorage.setItem("token", res.data.access_token);
+        // }
 
-        setTimeout(() => navigate("/dashboard"), 2000);
+        setTimeout(() => navigate("/dashboard"), 3000); // Slightly longer timeout
       })
       .catch((err) => {
+        console.error("Email verification error:", err); // Log the full error
         setSuccess(false);
-        setMessage(
-          err.response?.data?.detail || "Ошибка подтверждения токена"
-        );
+        if (err instanceof AxiosError && err.response) {
+          setMessage(err.response.data.detail || "Ошибка подтверждения токена. Возможно, ссылка недействительна или срок ее действия истек.");
+        } else {
+          setMessage("Произошла неизвестная ошибка при подтверждении email.");
+        }
       });
   }, [searchParams, navigate]);
 
