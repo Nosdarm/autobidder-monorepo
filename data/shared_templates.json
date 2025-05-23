@@ -1,0 +1,8 @@
+{
+    "UI/UX Starter": {
+      "keywords": ["figma", "ui", "ux"],
+      "exclude": ["blockchain", "scraping"],
+      "min_score": 0.7
+    }
+  }
+  

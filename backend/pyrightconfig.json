@@ -1,0 +1,21 @@
+{
+  "venvPath": "${workspaceFolder}",
+  "venv": "venv",
+  "pythonVersion": "3.13",
+  "pythonPlatform": "Windows",
+  "analysis": {
+    "autoSearchPaths": true,
+    "useLibraryCodeForTypes": true,
+    "extraPaths": [
+      "${workspaceFolder}/venv/Lib/site-packages",
+      "${workspaceFolder}\\venv\\Lib\\site-packages"
+    ],
+    "diagnosticSeverityOverrides": {
+      "reportMissingImports": "warning",
+      "reportUndefinedVariable": "warning",
+      "reportOptionalMemberAccess": "warning",
+      "reportGeneralTypeIssues": "warning",
+      "reportUnknownMemberType": "warning"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+2025/04/10-09:47:41.641 37f8 Creating DB C:\Users\Руслан Кузнецов\autobidder-project\backend\user_data\123abc\Default\IndexedDB\https_www.upwork.com_0.indexeddb.leveldb since it was missing.
+2025/04/10-09:47:41.663 37f8 Reusing MANIFEST C:\Users\Руслан Кузнецов\autobidder-project\backend\user_data\123abc\Default\IndexedDB\https_www.upwork.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/04/10-09:47:44.656 1868 Level-0 table #5: started
+2025/04/10-09:47:44.672 1868 Level-0 table #5: 563 bytes OK
+2025/04/10-09:47:44.678 1868 Delete type=0 #3
+2025/04/10-09:47:44.686 1868 Manual compaction at level-0 from '\x00\x01\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x02\x00\x00\x00' @ 0 : 0; will stop at (end)

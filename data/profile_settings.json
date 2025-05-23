@@ -1,0 +1,15 @@
+{
+    "profile-001": {
+      "limit": 15,
+      "keywords": "figma, dashboard, ui",
+      "exclude": "crypto, scraper",
+      "timezone": "UTC",
+      "schedule": "10:00",
+      "telegram_token": "",
+      "telegram_chat_id": "",
+      "notify_on_bid": true,
+      "notify_on_reply": true,
+      "notify_on_error": true
+    }
+  }
+  

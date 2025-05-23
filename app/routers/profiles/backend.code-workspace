@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"name": "backend",
+			"path": "../../.."
+		},
+		{
+			"name": "vscode",
+			"path": "../../../../vscode"
+		},
+		{
+			"name": "frontend-app",
+			"path": "../../../../frontend-app"
+		}
+	],
+	"settings": {}
+}
