@@ -4,20 +4,24 @@ from app.auth.jwt import get_current_user
 
 router = APIRouter()
 
+
 @router.post("/ml/predict")
 def predict(job: dict, user_id: str = Depends(get_current_user)):
     from app.services.ml_service import predict_job_success
     return predict_job_success(job)
+
 
 @router.get("/ml/metrics")
 def get_metrics(user_id: str = Depends(get_current_user)):
     from app.services.ml_service import get_model_metrics
     return get_model_metrics()
 
+
 @router.get("/ml/metrics/plot", response_class=HTMLResponse)
 def get_metrics_plot():
     from app.services.ml_service import get_metrics_plot_html
-    return get_metrics_plot_html()# app/services/ml_service.py
+    return get_metrics_plot_html()  # app/services/ml_service.py
+
 
 def predict_job_success(job: dict):
     # Пример простой логики — ты можешь заменить на свою модель
@@ -44,5 +48,9 @@ def get_model_metrics():
         "recall": 0.91
     }
 
+
 def get_metrics_plot_html():
-    return "<html><body><h1>Metrics Plot</h1><p>График пока не готов 😄</p></body></html>"
+    return (
+        "<html><body><h1>Metrics Plot</h1>"
+        "<p>График пока не готов 😄</p></body></html>"
+    )

@@ -5,7 +5,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.schemas.auth import RegisterInput, LoginInput
+from app.schemas.auth import RegisterInput, LoginInput, MessageResponse
 from app.schemas.user import UserOut, TokenResponse
 from app.services.auth_service import (
     register_user_service,
@@ -57,7 +57,7 @@ async def login_user(
 
 @router.get(
     "/verify",
-    response_model=None,
+    response_model=MessageResponse,
 )
 async def verify_email(
     token: str,

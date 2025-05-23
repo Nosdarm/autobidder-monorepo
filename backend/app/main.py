@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import engine, Base
+from app.config import settings # Import settings
 
 from app.routers.auth.auth_routes                import router as auth_router
 from app.routers.user.user_api                    import router as user_router
@@ -17,16 +18,12 @@ from app.routers.autobidder.autobidder_routes     import router as autobidder_ro
 from app.routers.autobidder.logs                  import router as autobid_logs_router
 from app.routers.ai.prompts                       import router as ai_prompts_router
 
-app = FastAPI(debug=True)
+app = FastAPI(debug=settings.APP_DEBUG) # Use settings
 
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:8000",
-        "http://localhost:8000",
-    ],
+    allow_origins=settings.CORS_ORIGINS, # Use settings
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

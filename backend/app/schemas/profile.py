@@ -2,6 +2,8 @@ from pydantic import BaseModel, Field
 from typing import Literal, Optional
 
 # --- Схемы для Профиля ---
+
+
 class ProfileBase(BaseModel):
     name: str = Field(..., description="Profile name")
     profile_type: Literal["personal", "agency"] = Field(
@@ -11,8 +13,10 @@ class ProfileBase(BaseModel):
         False, description="Is autobidder enabled for this profile"
     )
 
+
 class ProfileCreate(ProfileBase):
     pass
+
 
 class ProfileOut(ProfileBase):
     id: str = Field(..., description="Profile ID (UUID as string)")
@@ -21,6 +25,7 @@ class ProfileOut(ProfileBase):
     model_config = {
         "from_attributes": True
     }
+
 
 class ProfileUpdate(BaseModel):
     name: Optional[str] = Field(None, description="New profile name")

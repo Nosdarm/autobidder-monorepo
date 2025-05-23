@@ -1,5 +1,7 @@
-from app.services.keyword_profile_service import tokenize, get_top_keywords_for_profile
+from app.services.keyword_profile_service import (tokenize,
+                                                  get_top_keywords_for_profile)
 from sqlalchemy.orm import Session
+
 
 def calculate_keyword_affinity_score(
     db: Session,

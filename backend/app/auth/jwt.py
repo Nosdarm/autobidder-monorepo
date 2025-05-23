@@ -1,36 +1,38 @@
-import os
 from datetime import datetime, timedelta
 from typing import Optional
 
 from jose import JWTError, jwt
-from dotenv import load_dotenv
+# from dotenv import load_dotenv # Removed
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.utils.token_blacklist import is_token_blacklisted
+from app.config import settings # Import settings
 
 # 🔐 Загрузка .env переменных
-load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 дней
+# load_dotenv() # Removed
+# SECRET_KEY = os.getenv("SECRET_KEY") # Replaced
+# ALGORITHM = "HS256" # Replaced
+# ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 дней # Replaced
 
-if not SECRET_KEY:
-    raise ValueError("❌ SECRET_KEY is not set in .env")
+if not settings.SECRET_KEY:
+    raise ValueError("❌ SECRET_KEY is not set in .env or settings")
 
 auth_scheme = HTTPBearer()
 
 # ✅ Создание JWT токена
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.utcnow() + (
+        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES) # Use settings
+    )
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM) # Use settings
 
 # ✅ Декодирование JWT токена
 def decode_token(token: str):
     try:
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]) # Use settings
     except JWTError:
         return None
 

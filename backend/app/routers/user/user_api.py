@@ -1,11 +1,16 @@
 from fastapi import APIRouter, HTTPException, Depends, Path, Body
-from pydantic import BaseModel, EmailStr
+# EmailStr removed as it's not directly used here
 from uuid import uuid4
 import json
 import os
+from typing import List  # Import List
 
 from app.auth.jwt import get_current_user
-from app.utils.security import hash_password, verify_password
+# verify_password is not used in this file
+from app.utils.security import hash_password
+from app.schemas.auth import RegisterInput, MessageResponse  # Import common schemas
+from app.schemas.user import UserResponse, UserRegisterResponse
+# Import user specific schemas
 
 router = APIRouter()
 
@@ -14,15 +19,18 @@ PROFILES_FILE = "profiles.json"
 
 # ====================== 🔧 Работа с файлами ======================
 
+
 def load_users():
     if not os.path.exists(USERS_FILE):
         return []
     with open(USERS_FILE) as f:
         return json.load(f)
 
+
 def save_users(users):
     with open(USERS_FILE, "w") as f:
         json.dump(users, f, indent=2)
+
 
 def load_profiles():
     if not os.path.exists(PROFILES_FILE):
@@ -30,18 +38,19 @@ def load_profiles():
     with open(PROFILES_FILE) as f:
         return json.load(f)
 
+
 def save_profiles(profiles):
     with open(PROFILES_FILE, "w") as f:
         json.dump(profiles, f, indent=2)
 
 # ====================== 👤 Работа с пользователями ======================
 
-class RegisterInput(BaseModel):
-    email: EmailStr
-    password: str
+# Local RegisterInput removed, will use app.schemas.auth.RegisterInput
 
-@router.post("/register")
-def register_user(data: RegisterInput = Body(...)):
+
+# Add response_model
+@router.post("/register", response_model=UserRegisterResponse)
+def register_user(data: RegisterInput = Body(...)):  # Use imported RegisterInput
     users = load_users()
 
     if any(u["email"] == data.email for u in users):
@@ -57,9 +66,13 @@ def register_user(data: RegisterInput = Body(...)):
     users.append(new_user)
     save_users(users)
 
-    return {"message": "User registered", "id": new_user["id"]}
+    return UserRegisterResponse(
+        message="User registered",
+        id=new_user["id"]
+    )
 
-@router.get("/users")
+
+@router.get("/users", response_model=List[UserResponse])  # Add response_model
 def list_users(user_id: str = Depends(get_current_user)):
     users = load_users()
     current_user = next((u for u in users if u["id"] == user_id), None)
@@ -68,6 +81,7 @@ def list_users(user_id: str = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Access denied")
 
     return users
+
 
 @router.delete("/users/{target_user_id}")
 def delete_user(target_user_id: str, user_id: str = Depends(get_current_user)):
@@ -78,7 +92,9 @@ def delete_user(target_user_id: str, user_id: str = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Access denied")
 
     if target_user_id == user_id:
-        raise HTTPException(status_code=400, detail="You can't delete yourself")
+        raise HTTPException(
+            status_code=400,
+            detail="You can't delete yourself")
 
     filtered_users = [u for u in users if u["id"] != target_user_id]
 
@@ -86,9 +102,10 @@ def delete_user(target_user_id: str, user_id: str = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="User not found")
 
     save_users(filtered_users)
-    return {"message": "User deleted"}
+    return MessageResponse(message="User deleted")
 
-@router.get("/me")
+
+@router.get("/me", response_model=UserResponse)  # Add response_model
 def get_me(user_id: str = Depends(get_current_user)):
     users = load_users()
     user = next((u for u in users if u["id"] == user_id), None)
@@ -96,24 +113,26 @@ def get_me(user_id: str = Depends(get_current_user)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    return {
-        "id": user["id"],
-        "email": user["email"],
-        "role": user["role"]
-    }
+    # FastAPI will automatically convert the parts of the user dict
+    # that match UserResponse fields.
+    return user
 
 # ====================== ❌ Работа с профилями (удаление) ======================
 
-@router.delete("/profiles/{profile_id}")
+
+@router.delete("/profiles/{profile_id}",
+               response_model=MessageResponse)  # Add response_model
 def delete_profile(
     profile_id: str = Path(...),
     user_id: str = Depends(get_current_user)
 ):
     profiles = load_profiles()
-    updated_profiles = [p for p in profiles if not (p["id"] == profile_id and p["owner_id"] == user_id)]
+    updated_profiles = [p for p in profiles if not (
+        p["id"] == profile_id and p["owner_id"] == user_id)]
 
     if len(updated_profiles) == len(profiles):
-        raise HTTPException(status_code=404, detail="Profile not found or not yours")
+        raise HTTPException(status_code=404,
+                            detail="Profile not found or not yours")
 
     save_profiles(updated_profiles)
-    return {"message": "Profile deleted"}
+    return MessageResponse(message="Profile deleted")

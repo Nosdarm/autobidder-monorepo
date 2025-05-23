@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from app.database import Base
 
+
 class AIPrompt(Base):
     __tablename__ = "ai_prompts"
 
@@ -11,4 +12,6 @@ class AIPrompt(Base):
     prompt_text = Column(String, nullable=False)
     is_active = Column(Boolean, default=False)
 
-    profile = relationship("app.models.profile.Profile", back_populates="prompts")
+    profile = relationship(
+        "app.models.profile.Profile",
+        back_populates="prompts")

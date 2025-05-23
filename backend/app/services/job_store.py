@@ -8,6 +8,7 @@ from app.services.job_store import is_job_seen, save_job
 
 USER_DATA_DIR = "user_data"
 
+
 async def run_browser_bidder_for_profile(profile_id: str):
     print(f"[▶️ START] Профиль {profile_id}")
     profile_dir = os.path.join(USER_DATA_DIR, profile_id)
@@ -30,9 +31,11 @@ async def run_browser_bidder_for_profile(profile_id: str):
             sitekey = await page.get_attribute('[data-sitekey]', 'data-sitekey')
             token = await solve_cloudflare("https://www.upwork.com/", sitekey)
 
-            await page.evaluate("""
-                document.querySelector('textarea[name="g-recaptcha-response"]').value = arguments[0];
-            """, token)
+            await page.evaluate(
+                "document.querySelector('textarea[name=\"g-recaptcha-response\"]')"
+                ".value = arguments[0];",
+                token
+            )
 
             print("[✅] Токен вставлен. Обновляем страницу...")
             await page.reload()
@@ -62,7 +65,7 @@ async def run_browser_bidder_for_profile(profile_id: str):
         try:
             await page.wait_for_selector("a[data-cy='user-settings-menu']", timeout=5000)
             print(f"[✅] Успешно вошли в аккаунт: элемент профиля найден")
-        except:
+        except BaseException:
             print(f"[⚠️] Возможно, не авторизованы — элемент профиля не найден")
 
         # 📥 Сбор джобов
@@ -71,14 +74,16 @@ async def run_browser_bidder_for_profile(profile_id: str):
         for job in job_cards:
             title = await job.inner_text()
             href = await job.get_attribute("href")
-            job_id = href.strip().split("/")[-1]  # последний фрагмент URL
+            job_id = href.strip().split("/")[-1]
+            # последний фрагмент URL
 
             if is_job_seen(job_id):
                 print(f"[⏭️] Уже видели: {job_id} — пропускаем")
                 continue
 
             full_link = f"https://www.upwork.com{href}"
-            jobs.append({"id": job_id, "title": title.strip(), "link": full_link})
+            jobs.append(
+                {"id": job_id, "title": title.strip(), "link": full_link})
             save_job(job_id, title.strip(), full_link, profile_id)
 
         print(f"[📋] Найдено новых заданий: {len(jobs)}")
@@ -92,7 +97,9 @@ async def run_browser_bidder_for_profile(profile_id: str):
                 await page.click("text='Submit a proposal'")
                 await asyncio.sleep(3)
                 print(f"[✅] Открыта форма подачи заявки")
-                screenshot_path = f"screenshots/{profile_id}_{job['id']}_proposal.png"
+                screenshot_path = (
+                    f"screenshots/{profile_id}_{job['id']}_proposal.png"
+                )
                 os.makedirs("screenshots", exist_ok=True)
                 await page.screenshot(path=screenshot_path)
                 print(f"[📷] Скриншот формы: {screenshot_path}")

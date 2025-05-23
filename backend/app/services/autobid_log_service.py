@@ -2,6 +2,7 @@ from app.models.autobid_log import AutobidLog
 from sqlalchemy.orm import Session
 from datetime import datetime
 
+
 def log_autobid_attempt(
     db: Session,
     profile_id: int,

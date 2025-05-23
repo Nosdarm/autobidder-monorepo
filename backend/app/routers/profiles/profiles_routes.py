@@ -13,6 +13,7 @@ from app.services.auth_service import get_current_user_service
 
 router = APIRouter(tags=["Profiles"])  # prefix задаётся в main.py
 
+
 def get_current_user(
     payload: dict = Depends(get_current_user_with_role),
     db: Session = Depends(get_db),
@@ -28,6 +29,7 @@ def get_current_user(
         )
     return user
 
+
 @router.post(
     "/",
     response_model=ProfileOut,
@@ -42,6 +44,7 @@ def create_profile(
     Создаёт новый профиль для текущего пользователя.
     """
     return create_profile_service(data, current_user.id, db)
+
 
 @router.get(
     "/",
