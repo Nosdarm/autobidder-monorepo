@@ -9,10 +9,32 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    defaults:
+    defaults: # Ensure this is at the job level
       run:
-        working-directory: ./backend # Set working directory for all run steps
-
+        working-directory: ./backend
+    services: 
+      postgres: # Existing PostgreSQL service
+        image: postgres:13-alpine 
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432 
+        options: >- 
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis: # Add this new Redis service
+        image: redis:6-alpine 
+        ports:
+          - 6379:6379
+        options: >- # Health check for Redis
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -36,5 +58,14 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Test with pytest
+      env: 
+        DATABASE_URL: postgresql+asyncpg://testuser:testpassword@localhost:5432/testdb 
+        # No explicit REDIS_HOST/REDIS_PORT needed here if defaults in Settings are localhost:6379,
+        # as 'localhost' in the job runner can access service ports.
+        # If Settings defaults were different, or to be very explicit:
+        # REDIS_HOST: localhost # or redis (service name)
+        # REDIS_PORT: 6379
       run: |
+        # Optionally, run migrations if you want a clean DB for each test run
+        # alembic upgrade head 
         pytest

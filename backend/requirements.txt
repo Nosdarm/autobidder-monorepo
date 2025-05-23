@@ -2,7 +2,10 @@ fastapi
 uvicorn[standard]
 openai
 sqlalchemy>=1.4
-aiosqlite
+# aiosqlite # Removed
 pydantic
 python-dotenv
 slowapi
+asyncpg # Added
+psycopg2-binary # Added
+aioredis>=2.0.0 # Added for Redis

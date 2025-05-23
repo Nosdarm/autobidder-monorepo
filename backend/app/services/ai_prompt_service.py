@@ -1,10 +1,11 @@
 from openai import AsyncOpenAI  # Используем асинхронный клиент
 from app.config import settings
 import logging # For logging cache operations
+from app.redis_cache import redis_cache_client # Import Redis cache client
 
-# Initialize cache
-preview_cache = {}
-MAX_CACHE_SIZE = 100
+# Remove Old Cache Variables
+# preview_cache = {}
+# MAX_CACHE_SIZE = 100
 logger = logging.getLogger(__name__)
 
 # !!! Важно: Создайте клиент правильно !!!
@@ -18,12 +19,15 @@ client = AsyncOpenAI(
 
 
 async def generate_preview(full_text: str):
-    # Check cache first
-    if full_text in preview_cache:
-        logger.info("Cache hit for generate_preview.")
-        return preview_cache[full_text]
+    cache_key = f"preview_cache:{full_text}" # Define cache key with prefix
 
-    logger.info("Cache miss for generate_preview. Calling API.")
+    # Check Redis cache first
+    cached_result = await redis_cache_client.get(cache_key)
+    if cached_result is not None:
+        logger.info(f"Redis cache hit for generate_preview: {cache_key}")
+        return cached_result
+
+    logger.info(f"Redis cache miss for generate_preview: {cache_key}. Calling API.")
     try:
         chat_completion = await client.chat.completions.create(
             model=settings.OPENAI_MODEL,  # Используем модель из настроек
@@ -43,12 +47,10 @@ async def generate_preview(full_text: str):
         
         if preview_text_obj:
             preview_text = preview_text_obj.strip()
-            # Cache successful result
-            if len(preview_cache) >= MAX_CACHE_SIZE:
-                logger.info(f"Cache is full (size {len(preview_cache)}). Clearing cache.")
-                preview_cache.clear()
-            preview_cache[full_text] = preview_text
-            logger.info("Successfully cached new preview.")
+            # Store successful result in Redis
+            await redis_cache_client.set(cache_key, preview_text) 
+            # TTL is handled by redis_cache_client.set using settings.REDIS_CACHE_TTL_SECONDS
+            logger.info(f"Successfully cached new preview in Redis: {cache_key}")
             return preview_text
         else:
             logger.warning("OpenAI returned empty preview text.")
