@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 
 
 class BidCreateInput(BaseModel):
@@ -15,6 +15,9 @@ class BidResponse(BaseModel):
     job_id: str
     amount: float
     submitted_at: datetime
+    prompt_template_id: Optional[str] = None
+    generated_bid_text: Optional[str] = None
+    bid_settings_snapshot: Optional[Dict[str, Any]] = None
 
     class Config:
         orm_mode = True

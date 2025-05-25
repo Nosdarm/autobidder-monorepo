@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 
 # --- Схемы для Профиля ---
 class ProfileBase(BaseModel):
@@ -10,6 +10,8 @@ class ProfileBase(BaseModel):
     autobid_enabled: bool = Field(
         False, description="Is autobidder enabled for this profile"
     )
+    skills: Optional[List[str]] = Field(None, description="List of skills")
+    experience_level: Optional[str] = Field(None, description="Experience level")
 
 class ProfileCreate(ProfileBase):
     pass
@@ -30,3 +32,5 @@ class ProfileUpdate(BaseModel):
     autobid_enabled: Optional[bool] = Field(
         None, description="New state for autobidder"
     )
+    skills: Optional[List[str]] = Field(None, description="New list of skills")
+    experience_level: Optional[str] = Field(None, description="New experience level")

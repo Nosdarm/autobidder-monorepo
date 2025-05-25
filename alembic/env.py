@@ -3,7 +3,16 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.database import Base
-from app import models  
+# Ensure all models are imported for Alembic autogenerate
+from app.models.user import User
+from app.models.profile import Profile
+from app.models.bid import Bid
+from app.models.token_blacklist import TokenBlacklist
+from app.models.autobid_log import AutobidLog
+from app.models.autobid_settings import AutobidSettings
+from app.models.ai_prompt import AIPrompt
+from app.models.job import Job
+# from app import models # Original import, can be kept or removed if explicit imports cover all
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
@@ -15,7 +24,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # ✅ ВАЖНО
-target_metadata = Base.metadata
+target_metadata = Base.metadata # All models should be registered with Base.metadata by now
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
@@ -44,7 +53,7 @@ def run_migrations_online() -> None:
             context.run_migrations()
 
 
-from app.models import autobid_settings
+# from app.models import autobid_settings # This specific import seems out of place here
 if context.is_offline_mode():
     run_migrations_offline()
 else:
