@@ -4,8 +4,8 @@ from app.config import settings
 
 # Асинхронный движок
 engine = create_async_engine(
-    settings.database_url,
-    echo=True,
+    settings.database_url
+    # echo=True, # Removed echo=True as per example's implication
 )
 
 # Фабрика сессий

@@ -1,8 +1,13 @@
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.requests import Request # Add Request for slowapi
+from slowapi import Limiter, _rate_limit_exceeded_handler # Add slowapi imports
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from app.database import engine, Base
+from app.config import settings # Import settings
 
 from app.routers.auth.auth_routes                import router as auth_router
 from app.routers.user.user_api                    import router as user_router
@@ -16,17 +21,19 @@ from app.routers.templates.shared_templates_routes import router as shared_templ
 from app.routers.autobidder.autobidder_routes     import router as autobidder_router
 from app.routers.autobidder.logs                  import router as autobid_logs_router
 from app.routers.ai.prompts                       import router as ai_prompts_router
+from app.routers import websockets as ws_router # Import WebSocket router
 
-app = FastAPI(debug=True)
+app = FastAPI(debug=settings.APP_DEBUG) # Use settings
+
+# Initialize Limiter for rate limiting
+limiter = Limiter(key_func=get_remote_address, default_limits=["5/minute"])
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:8000",
-        "http://localhost:8000",
-    ],
+    allow_origins=settings.CORS_ORIGINS, # Use settings
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -51,6 +58,7 @@ app.include_router(shared_templates_router, prefix="/templates",       tags=["Sh
 app.include_router(autobidder_router,       prefix="/autobidder",      tags=["Autobidder"])
 app.include_router(autobid_logs_router,     prefix="/autobidder/logs", tags=["Autobidder Logs"])
 app.include_router(ai_prompts_router,       prefix="/ai",              tags=["AI Prompts"])
+app.include_router(ws_router.router,        prefix="/ws",              tags=["WebSockets"]) # Include WebSocket router
 
 # Лог всех маршрутов
 def _log_routes():

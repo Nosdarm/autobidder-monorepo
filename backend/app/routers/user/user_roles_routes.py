@@ -1,16 +1,17 @@
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+# BaseModel no longer needed here directly if RoleUpdateInput is imported
 import json
 import os
 from app.auth.jwt import require_role
-from app.models.profile import Profile
+# from app.models.profile import Profile # Profile import is not used
+from app.schemas.user import RoleUpdateInput, UserRoleUpdateResponse
+# Import schemas
 
 router = APIRouter()
 USERS_FILE = "users.json"
 
-class RoleUpdateInput(BaseModel):
-    user_id: str
-    role: str
+# Local RoleUpdateInput removed
+
 
 def load_users():
     if not os.path.exists(USERS_FILE):
@@ -18,15 +19,19 @@ def load_users():
     with open(USERS_FILE) as f:
         return json.load(f)
 
+
 def save_users(users):
     with open(USERS_FILE, "w") as f:
         json.dump(users, f, indent=2)
 
 # 🔐 Обновить роль пользователя (только для супер-админа)
-@router.post("/admin/set-role")
+
+
+# Add response_model
+@router.post("/admin/set-role", response_model=UserRoleUpdateResponse)
 def set_user_role(
-    data: RoleUpdateInput,
-    requester = Depends(require_role("superadmin"))
+    data: RoleUpdateInput,  # Use imported RoleUpdateInput
+    requester=Depends(require_role("superadmin"))
 ):
     users = load_users()
     found = False
@@ -40,4 +45,7 @@ def set_user_role(
         raise HTTPException(status_code=404, detail="User not found")
 
     save_users(users)
-    return {"status": "role updated", "user_id": data.user_id, "new_role": data.role}
+    return UserRoleUpdateResponse(
+        status="role updated",
+        user_id=data.user_id,
+        new_role=data.role)

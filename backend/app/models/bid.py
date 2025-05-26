@@ -8,9 +8,15 @@ class Bid(Base):
     __tablename__ = "bids"
 
     id = Column(String, primary_key=True, index=True)
-    profile_id = Column(String, ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
+    profile_id = Column(
+        String,
+        ForeignKey(
+            "profiles.id",
+            ondelete="CASCADE"),
+        nullable=False)
     job_id = Column(String, nullable=False)
     amount = Column(Float, nullable=False)
     submitted_at = Column(DateTime, default=datetime.utcnow)
+    status = Column(String, default="created", nullable=False) # New status field
 
     profile = relationship("Profile", backref="bids")

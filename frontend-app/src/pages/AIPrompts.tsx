@@ -1,27 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../lib/axios'; // Updated axios import
+import { AxiosError } from 'axios'; // For type checking
 import { useParams } from 'react-router-dom';
 
 type AIPrompt = {
-  id: number;
+  id: string;          // Changed from number
   name: string;
   prompt_text: string;
-  profile_id: number;
+  profile_id: string;  // Changed from number
   is_active: boolean;
 };
 
 const AIPrompts: React.FC = () => {
-  const { profileId } = useParams();
+  const { profileId } = useParams<{ profileId: string }>(); // Ensure profileId is typed as string
   const [prompts, setPrompts] = useState<AIPrompt[]>([]);
   const [name, setName] = useState('');
   const [promptText, setPromptText] = useState('');
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [previewInputs, setPreviewInputs] = useState<Record<number, string>>({});
-  const [previewResults, setPreviewResults] = useState<Record<number, string>>({});
+  const [editingId, setEditingId] = useState<string | null>(null); // Changed to string
+  const [previewInputs, setPreviewInputs] = useState<Record<string, string>>({}); // Key changed to string
+  const [previewResults, setPreviewResults] = useState<Record<string, string>>({}); // Key changed to string
+  const [previewErrorMessages, setPreviewErrorMessages] = useState<Record<string, string>>({}); // Key changed to string
 
   const fetchPrompts = async () => {
     if (!profileId) return;
-    const res = await axios.get(`/prompts/profile/${profileId}`);
+    const res = await api.get(`/prompts/profile/${profileId}`); // Use api
     setPrompts(res.data);
   };
 
@@ -33,12 +35,18 @@ const AIPrompts: React.FC = () => {
     if (!name || !promptText || !profileId) return;
 
     if (editingId) {
-      await axios.put(`/prompts/${editingId}`, { name, prompt_text: promptText });
+      await api.put(`/prompts/${editingId}`, { name, prompt_text: promptText }); 
     } else {
-      await axios.post(`/prompts/`, {
+      // Ensure profileId is defined before using it. The check at the start of function should handle this.
+      if (!profileId) {
+        console.error("Profile ID is undefined, cannot save prompt.");
+        // Optionally set an error message for the user here
+        return;
+      }
+      await api.post(`/prompts/`, { 
         name,
         prompt_text: promptText,
-        profile_id: parseInt(profileId),
+        profile_id: profileId, // Changed from parseInt(profileId)
         is_active: false
       });
     }
@@ -52,22 +60,52 @@ const AIPrompts: React.FC = () => {
   const handleEdit = (prompt: AIPrompt) => {
     setName(prompt.name);
     setPromptText(prompt.prompt_text);
-    setEditingId(prompt.id);
+    setEditingId(prompt.id); // prompt.id is now string
   };
 
-  const handleDelete = async (id: number) => {
-    await axios.delete(`/prompts/${id}`);
+  const handleDelete = async (id: string) => { // Changed id to string
+    await api.delete(`/prompts/${id}`); 
     fetchPrompts();
   };
 
-  const setActivePrompt = async (id: number) => {
-    await axios.post(`/prompts/${id}/set-active`);
+  const setActivePrompt = async (id: string) => { // Changed id to string
+    await api.post(`/prompts/${id}/set-active`); 
     fetchPrompts();
   };
 
-  const handlePreview = async (id: number, description: string) => {
-    const res = await axios.post(`/prompts/${id}/preview`, { description });
-    setPreviewResults((prev) => ({ ...prev, [id]: res.data.preview }));
+  const handlePreview = async (id: string, description: string) => { // Changed id to string
+    // Clear previous errors and results for this prompt
+    setPreviewErrorMessages(prev => ({ ...prev, [id]: '' }));
+    setPreviewResults(prev => ({ ...prev, [id]: '' }));
+
+    if (!description) {
+      setPreviewErrorMessages(prev => ({ ...prev, [id]: 'Пожалуйста, введите описание джобы.' }));
+      return;
+    }
+
+    try {
+      const res = await api.post(`/prompts/${id}/preview`, { description }); // Use api
+      setPreviewResults((prev) => ({ ...prev, [id]: res.data.preview }));
+    } catch (error) {
+      console.error("Error during preview generation:", error);
+      if (error instanceof AxiosError && error.response?.status === 429) {
+        setPreviewErrorMessages((prev) => ({
+          ...prev,
+          [id]: 'Вы слишком часто делаете запросы. Пожалуйста, подождите минуту.'
+        }));
+      } else if (error instanceof AxiosError && error.response) {
+        setPreviewErrorMessages((prev) => ({
+          ...prev,
+          [id]: `Ошибка: ${error.response.data.detail || error.message}`
+        }));
+      } 
+      else {
+        setPreviewErrorMessages((prev) => ({
+          ...prev,
+          [id]: 'Произошла неизвестная ошибка при генерации превью.'
+        }));
+      }
+    }
   };
 
   return (
@@ -130,6 +168,11 @@ const AIPrompts: React.FC = () => {
                 <strong>Предпросмотр:</strong>
                 <p>{previewResults[prompt.id]}</p>
               </div>
+            )}
+            {previewErrorMessages[prompt.id] && (
+              <p className="text-sm text-red-500 mt-1">
+                {previewErrorMessages[prompt.id]}
+              </p>
             )}
 
             <div className="mt-3 flex gap-3 flex-wrap">

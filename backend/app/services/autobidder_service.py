@@ -2,11 +2,11 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.models.autobid_settings import AutobidSettings
 from app.schemas.autobid import AutobidSettingsUpdate
-      
 
 
 def get_settings_for_profile(profile_id: str, db: Session):
-    settings = db.query(AutobidSettings).filter(AutobidSettings.profile_id == profile_id).first()
+    settings = db.query(AutobidSettings).filter(
+        AutobidSettings.profile_id == profile_id).first()
     if not settings:
         # Автоматически создаём настройки, если не существуют
         settings = AutobidSettings(profile_id=profile_id)
@@ -16,8 +16,12 @@ def get_settings_for_profile(profile_id: str, db: Session):
     return settings
 
 
-def update_settings_for_profile(profile_id: str, data: AutobidSettingsUpdate, db: Session):
-    settings = db.query(AutobidSettings).filter(AutobidSettings.profile_id == profile_id).first()
+def update_settings_for_profile(
+        profile_id: str,
+        data: AutobidSettingsUpdate,
+        db: Session):
+    settings = db.query(AutobidSettings).filter(
+        AutobidSettings.profile_id == profile_id).first()
     if not settings:
         raise HTTPException(status_code=404, detail="Настройки не найдены")
 

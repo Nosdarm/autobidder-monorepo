@@ -1,11 +1,15 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional
+# Optional removed
 
 
 class BidCreateInput(BaseModel):
-    profile_id: str = Field(..., description="ID профиля, с которого делается ставка")
-    job_id: str = Field(..., description="ID проекта, на который делается ставка")
+    profile_id: str = Field(
+        ..., description="ID профиля, с которого делается ставка"
+    )
+    job_id: str = Field(
+        ..., description="ID проекта, на который делается ставка"
+    )
     amount: float = Field(..., gt=0, description="Размер ставки")
 
 
@@ -15,6 +19,6 @@ class BidResponse(BaseModel):
     job_id: str
     amount: float
     submitted_at: datetime
+    status: str # Added status field
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}  # Pydantic V2

@@ -1,0 +1,71 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ main ] # Or your primary branch, e.g., master
+  pull_request:
+    branches: [ main ] # Or your primary branch
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults: # Ensure this is at the job level
+      run:
+        working-directory: ./backend
+    services: 
+      postgres: # Existing PostgreSQL service
+        image: postgres:13-alpine 
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432 
+        options: >- 
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis: # Add this new Redis service
+        image: redis:6-alpine 
+        ports:
+          - 6379:6379
+        options: >- # Health check for Redis
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.11' # Match the Dockerfile Python version
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install flake8 pytest # Install flake8 and pytest for CI steps
+
+    - name: Lint with Flake8
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Test with pytest
+      env: 
+        DATABASE_URL: postgresql+asyncpg://testuser:testpassword@localhost:5432/testdb 
+        # No explicit REDIS_HOST/REDIS_PORT needed here if defaults in Settings are localhost:6379,
+        # as 'localhost' in the job runner can access service ports.
+        # If Settings defaults were different, or to be very explicit:
+        # REDIS_HOST: localhost # or redis (service name)
+        # REDIS_PORT: 6379
+      run: |
+        # Optionally, run migrations if you want a clean DB for each test run
+        # alembic upgrade head 
+        pytest

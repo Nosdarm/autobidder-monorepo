@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from './lib/axios'; // Adjusted path for api import
 
 interface Props {
   children: React.ReactNode;
@@ -18,16 +19,16 @@ const PrivateRoute = ({ children }: Props) => {
       return;
     }
 
-    fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    // Assuming api instance in lib/axios.ts has an interceptor for the token
+    api.get("/auth/me")
       .then((res) => {
-        if (res.ok) return res.json();
-        throw new Error();
+        // If /auth/me returns user data upon successful authentication
+        if (res.data) { // Check if response data exists
+          setIsAuthenticated(true);
+        } else { // Should not happen if API is consistent, but good for robustness
+          throw new Error("Authentication check failed, no user data returned.");
+        }
       })
-      .then(() => setIsAuthenticated(true))
       .catch(() => {
         localStorage.removeItem("token");
         navigate("/signin");

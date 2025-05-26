@@ -1,17 +1,20 @@
 import { useState } from "react";
-import axios from "axios";
+import api from '../../lib/axios'; // Updated axios import
+import { AxiosError } from 'axios'; // For type checking
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [message, setMessage] = useState("");
+  const [error, setError] = useState(""); // Added error state
   const [loading, setLoading] = useState(false);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+    setError(""); // Clear previous errors
 
     if (password !== confirm) {
       alert("Пароли не совпадают");
@@ -20,21 +23,27 @@ const SignUp = () => {
     }
 
     try {
-      const res = await axios.post("http://localhost:8000/auth/register", {
+      const res = await api.post("/auth/register", { // Use api and relative path
         email,
         password,
       });
 
-      setMessage("Регистрация успешна.");
+      setMessage("Регистрация успешна. Проверьте вашу почту для верификации."); // Updated message
       setEmail("");
       setPassword("");
       setConfirm("");
 
-      if (res.data.verify_link) {
-        window.open(res.data.verify_link, "_blank");
-      }
+      // Removed automatic opening of verify_link as it's better user experience
+      // to inform them to check their email.
+      // if (res.data.verify_link) { 
+      //   window.open(res.data.verify_link, "_blank");
+      // }
     } catch (err: any) {
-      alert(err.response?.data?.detail || "Ошибка регистрации");
+      if (err instanceof AxiosError && err.response) {
+        setError(err.response.data.detail || "Ошибка регистрации");
+      } else {
+        setError("Ошибка регистрации. Попробуйте снова.");
+      }
     } finally {
       setLoading(false);
     }
@@ -83,6 +92,7 @@ const SignUp = () => {
           </button>
         </form>
         {message && <p className="mt-4 text-center text-green-600">{message}</p>}
+        {error && <p className="mt-4 text-center text-red-600">{error}</p>} 
       </div>
     </div>
   );

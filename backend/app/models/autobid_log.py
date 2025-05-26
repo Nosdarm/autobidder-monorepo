@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Text
+from sqlalchemy import (Column, Integer, String, Float,
+                        ForeignKey, DateTime, Text)
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
+
 
 class AutobidLog(Base):
     __tablename__ = "autobid_logs"
@@ -16,4 +18,6 @@ class AutobidLog(Base):
     error_message = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    profile = relationship("app.models.profile.Profile", back_populates="autobid_logs")
+    profile = relationship(
+        "app.models.profile.Profile",
+        back_populates="autobid_logs")

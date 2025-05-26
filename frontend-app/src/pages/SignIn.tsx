@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from '../../lib/axios'; // Updated axios import
 import { useNavigate } from "react-router-dom";
 
 const SignIn = () => {
@@ -26,15 +26,9 @@ const SignIn = () => {
     }
 
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/login`,
-        { email, password },
-        {
-          headers: {
-            "Content-Type": "application/json", // 🔧 ОБЯЗАТЕЛЬНО!
-          },
-        }
-      );
+      const res = await api.post("/auth/login", { email, password });
+      // Headers for Content-Type: application/json are typically set by default
+      // by Axios when sending a JavaScript object as data.
 
       localStorage.setItem("token", res.data.access_token);
       navigate("/dashboard");

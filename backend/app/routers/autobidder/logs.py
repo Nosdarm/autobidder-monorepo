@@ -6,6 +6,7 @@ from app.schemas.autobid_log import AutobidLogOut
 
 router = APIRouter(prefix="/autobid-logs", tags=["Autobid Logs"])
 
+
 @router.get("/{profile_id}", response_model=list[AutobidLogOut])
 def get_logs_for_profile(profile_id: int, db: Session = Depends(get_db)):
     logs = (

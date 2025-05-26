@@ -1,20 +1,25 @@
 # app/services/captcha_service.py
 import httpx
-import os
+import os # Keep os if needed for other parts, otherwise remove
 import asyncio
+from app.config import settings # Import settings
 
-CAPTCHA_API_KEY = os.getenv("CAPTCHA_API_KEY")
-CAPTCHA_PROVIDER = os.getenv("CAPTCHA_PROVIDER", "2captcha")  # можно переключать позже
+# CAPTCHA_API_KEY = os.getenv("CAPTCHA_API_KEY") # Replaced by settings
+# CAPTCHA_PROVIDER = os.getenv( # Replaced by settings
+#     "CAPTCHA_PROVIDER",
+#     "2captcha")
 
-if not CAPTCHA_API_KEY:
-    raise ValueError("❌ CAPTCHA_API_KEY не установлен в .env")
+if not settings.CAPTCHA_API_KEY:
+    raise ValueError("❌ CAPTCHA_API_KEY не установлен в .env или настройках")
+
 
 async def solve_cloudflare(url: str, sitekey: str) -> str:
     """
-    Отправляет задачу в 2Captcha или CapMonster и возвращает решение (g-recaptcha-response)
+    Отправляет задачу в 2Captcha или CapMonster и возвращает решение
+    (g-recaptcha-response)
     """
     task_data = {
-        "clientKey": CAPTCHA_API_KEY,
+        "clientKey": settings.CAPTCHA_API_KEY, # Use settings
         "task": {
             "type": "HCaptchaTaskProxyless",
             "websiteURL": url,
@@ -24,15 +29,18 @@ async def solve_cloudflare(url: str, sitekey: str) -> str:
 
     async with httpx.AsyncClient() as client:
         # 1. Отправляем задачу
-        resp = await client.post("https://api.capmonster.cloud/createTask", json=task_data)
+        create_task_url = str(settings.CAPMONSTER_CREATE_TASK_URL) # Use settings
+        resp = await client.post(create_task_url, json=task_data)
         task_id = resp.json().get("taskId")
         if not task_id:
             raise RuntimeError(f"❌ Не удалось создать задачу: {resp.text}")
 
         # 2. Ждём решения
+        get_result_url = str(settings.CAPMONSTER_GET_TASK_URL) # Use settings
+        payload = {"clientKey": settings.CAPTCHA_API_KEY, "taskId": task_id} # Use settings
         for _ in range(30):
             await asyncio.sleep(5)
-            result = await client.post("https://api.capmonster.cloud/getTaskResult", json={"clientKey": CAPTCHA_API_KEY, "taskId": task_id})
+            result = await client.post(get_result_url, json=payload)
             status = result.json()
             if status["status"] == "ready":
                 return status["solution"]["gRecaptchaResponse"]
