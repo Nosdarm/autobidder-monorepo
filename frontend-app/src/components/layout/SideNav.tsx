@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext'; // Conceptual path
+import { useAuth } from '@/components/contexts/AuthContext'; // Conceptual path
 // import { Home, Users, FileText, Settings, LogOut, BotMessageSquare } from 'lucide-react'; // Conceptual lucide icons
 
 export default function SideNav() {

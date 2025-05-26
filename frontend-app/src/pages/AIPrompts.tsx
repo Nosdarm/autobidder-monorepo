@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import api from '../../lib/axios'; // Updated axios import
+import api from '@/lib/axios'; // Updated axios import
 import { AxiosError } from 'axios'; // For type checking
 import { useParams } from 'react-router-dom';
 

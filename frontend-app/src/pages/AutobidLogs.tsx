@@ -1,6 +1,6 @@
 import AIScoreChart from './AIScoreChart';
 import React, { useEffect, useState } from 'react';
-import api from '../../lib/axios'; // Updated axios import
+import api from '@/lib/axios'; // Updated axios import
 import { useParams } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
