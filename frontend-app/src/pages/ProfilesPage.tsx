@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { profileService, Profile, ProfileCreate, ProfileUpdate } from '@/services/profileService';
-import { AuthProvider, useAuth } from './components/contexts/AuthContext';
+import { useAuth } from '@/components/contexts/AuthContext';
+import ProfileFormModal from '@/components/profiles/ProfileFormModal';
 
 // Conceptual imports for shadcn/ui - replace with actual implementations later
 // import { Button } from '@/components/ui/button';

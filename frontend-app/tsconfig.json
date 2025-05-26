@@ -5,7 +5,11 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
-    "strict": true /* Or match the strictness of your main tsconfig.json if preferred */
+    "strict": true, /* Or match the strictness of your main tsconfig.json if preferred */
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "include": ["vite.config.ts", "postcss.config.js", "tailwind.config.js"] /* Include other config files if they are .ts or need specific Node handling */
 }
