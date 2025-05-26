@@ -150,6 +150,7 @@ export default function ProfilesPage() {
       </table>
 
       {isModalOpen && (
+        /** @type {import('@/components/profiles/ProfileFormModal').default} */
         <ProfileFormModal
           isOpen={isModalOpen}
           onClose={() => {
