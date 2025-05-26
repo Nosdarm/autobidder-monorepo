@@ -1,0 +1,3 @@
+# This placeholder file ensures the 'artifacts' directory is tracked by Git.
+# This directory is intended for storing serialized ML models, scalers,
+# and other pipeline components.
