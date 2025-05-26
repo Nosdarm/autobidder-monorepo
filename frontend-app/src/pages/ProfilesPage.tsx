@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { profileService, Profile, ProfileCreate, ProfileUpdate } from '@/services/profileService';
+import { useAuth } from '@/components/contexts/AuthContext';
+import ProfileFormModal from '@/components/profiles/ProfileFormModal';
 
 // Conceptual imports for shadcn/ui - replace with actual implementations later
 // import { Button } from '@/components/ui/button';
@@ -148,6 +150,7 @@ export default function ProfilesPage() {
       </table>
 
       {isModalOpen && (
+        /** @type {import('@/components/profiles/ProfileFormModal').default} */
         <ProfileFormModal
           isOpen={isModalOpen}
           onClose={() => {
