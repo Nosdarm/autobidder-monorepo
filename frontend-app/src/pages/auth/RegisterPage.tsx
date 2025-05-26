@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 // import { Input } from '@/components/ui/input';
 // import { Label } from '@/components/ui/label';
 // import { useToast } from '@/components/ui/use-toast';
-import { useAuth } from '@/contexts/AuthContext'; // Conceptual path
+import { useAuth } from '@/components/contexts/AuthContext'; // Conceptual path
 
 export default function RegisterPage() {
   const [name, setName] = useState('');

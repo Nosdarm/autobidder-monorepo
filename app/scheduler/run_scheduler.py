@@ -1,5 +1,5 @@
 import time
-from autobidder.autobid_logic import run_autobid
+from backend.autobidder.autobid_logic import run_autobid
 
 def run_periodically(interval_seconds: int = 60):
     while True:
