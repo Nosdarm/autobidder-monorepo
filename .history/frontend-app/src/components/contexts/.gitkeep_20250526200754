@@ -1,4 +1,0 @@
-# This directory will house React Context API providers and hooks.
-# For example, AuthContext.tsx, ThemeContext.tsx.
-# Alternatively, if a state management library like Zustand or Redux is used,
-# the 'store/' directory might be preferred.
