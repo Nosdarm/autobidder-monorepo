@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { profileService, Profile, ProfileCreate, ProfileUpdate } from '@/services/profileService';
 import { AuthProvider, useAuth } from './components/contexts/AuthContext';
-
 // Conceptual imports for shadcn/ui - replace with actual implementations later
 // import { Button } from '@/components/ui/button';
 // import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
