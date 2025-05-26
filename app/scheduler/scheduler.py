@@ -1,5 +1,5 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from autobidder.autobid_logic import run_autobid
+from backend.autobidder.autobid_logic import run_autobid
 import time
 
 def start_scheduler():

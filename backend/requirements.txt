@@ -13,3 +13,6 @@ joblib>=1.0
 cloudpickle>=2.0
 httpx>=0.20
 APScheduler>=3.6
+slowapi
+redis
+pydantic-settings
