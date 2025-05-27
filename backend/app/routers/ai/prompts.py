@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request # Add Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.main import limiter # Import the limiter instance from main.py
+from app.limiter import limiter # Import the shared limiter instance
 # Используем ваш путь импорта get_db
 from app.database import get_db
 # Используем ваш путь импорта ORM Модели
@@ -152,7 +152,7 @@ async def delete_prompt(
 @limiter.limit("5/minute") # Apply rate limit
 async def preview_prompt( 
     request_data: AIPromptPreviewRequest, # Use new schema
-    fastapi_request: Request, # Add FastAPI Request for rate limiter
+    request: Request, # Renamed for slowapi
     db: AsyncSession = Depends(get_db),
 ):
     # Для интереса

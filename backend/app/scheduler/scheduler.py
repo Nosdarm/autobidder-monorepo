@@ -2,17 +2,18 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from autobidder.autobid_logic import run_autobid
 import time
 
+scheduler = BackgroundScheduler()
+
 def start_scheduler():
-    scheduler = BackgroundScheduler()
-
-    # Запуск каждые 2 минуты
+    # Uses the global scheduler instance
     scheduler.add_job(run_autobid, 'interval', minutes=2)
-
     scheduler.start()
     print("✅ Автобидер по расписанию запущен.")
 
-    try:
-        while True:
-            time.sleep(1)  # 💤 чтобы не завершался
-    except (KeyboardInterrupt, SystemExit):
+def shutdown_scheduler():
+    # Uses the global scheduler instance
+    if scheduler.running: # Check if scheduler is running before shutting down
         scheduler.shutdown()
+        print("🛑 Автобидер по расписанию остановлен.")
+    else:
+        print("ℹ️ Планировщик не был запущен.")

@@ -7,7 +7,7 @@ from typing import List
 
 from app.database import get_db
 from app.models.profile import Profile
-from app.schemas.profile import ProfileOut  # Import ProfileOut
+from app.schemas.profile import Profile as ProfileOut  # Import Profile as ProfileOut
 from app.auth.jwt import get_current_user_with_role
 
 router = APIRouter(
