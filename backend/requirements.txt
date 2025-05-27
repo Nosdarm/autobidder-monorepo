@@ -17,3 +17,4 @@ slowapi
 redis
 pydantic-settings
 passlib[bcrypt]>=0.7.0
+asyncpg
