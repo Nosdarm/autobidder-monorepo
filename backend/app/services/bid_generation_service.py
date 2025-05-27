@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from openai import AsyncOpenAI, OpenAIError
 from app.models.ai_prompt import AIPrompt
 from app.services.score_helper import calculate_keyword_affinity_score
+from app.config import settings
 
 # --- Клиент OpenAI ---
 # Лучше инициализировать клиент один раз.
@@ -14,11 +15,19 @@ from app.services.score_helper import calculate_keyword_affinity_score
 # Убедитесь, что ваш API-ключ OpenAI доступен (например, через переменную
 # окружения OPENAI_API_KEY)
 try:
-    client = AsyncOpenAI()
-    openai_available = True
+    if settings.OPENAI_API_KEY:
+        client = AsyncOpenAI(
+            api_key=settings.OPENAI_API_KEY,
+            timeout=settings.OPENAI_TIMEOUT,
+        )
+        openai_available = True
+    else:
+        logging.error("OpenAI API key not configured in settings. AI generation will be disabled.")
+        client = None
+        openai_available = False
 except Exception as e:
     logging.error(
-        f"Failed to initialize OpenAI client: {e}. "
+        f"Failed to initialize OpenAI client even with API key: {e}. "
         "AI generation will be disabled."
     )
     client = None

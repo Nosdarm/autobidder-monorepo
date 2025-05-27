@@ -1,4 +1,3 @@
-import os
 import logging
 import httpx
 from datetime import datetime, timedelta # Added timedelta
@@ -39,10 +38,11 @@ except ImportError:
     def featurize_submission_time(dt: datetime) -> Dict[str, Any]: return {}
     def featurize_bid_settings(settings_dict: Dict[str, Any]) -> Dict[str, Any]: return {}
 
+from app.config import settings
 
 # Configuration
-ML_PREDICTION_ENDPOINT_URL = os.getenv("ML_PREDICTION_ENDPOINT_URL", "http://localhost:8000/ml/predict_success_proba") # Corrected path from ml_routes
-ML_PROBABILITY_THRESHOLD = float(os.getenv("ML_PROBABILITY_THRESHOLD", "0.5"))
+ML_PREDICTION_ENDPOINT_URL = str(settings.ML_PREDICTION_ENDPOINT_URL) # Corrected path from ml_routes
+ML_PROBABILITY_THRESHOLD = settings.ML_PROBABILITY_THRESHOLD
 
 logger = logging.getLogger(__name__)
 # Ensure logging is configured elsewhere in the app, or configure here if standalone

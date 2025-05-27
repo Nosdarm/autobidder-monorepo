@@ -50,6 +50,11 @@ class Settings(BaseSettings):
     REDIS_DB: int = 0
     REDIS_PASSWORD: Optional[str] = None # If your Redis is password-protected
     REDIS_CACHE_TTL_SECONDS: int = 60 * 60  # Default TTL for cache (1 hour)
+
+    # ML Model Settings
+    ML_PREDICTION_ENDPOINT_URL: AnyHttpUrl = "http://localhost:8000/ml/predict_success_proba" # type: ignore
+    ML_PROBABILITY_THRESHOLD: float = 0.5
+    MODEL_PATH: str = "app/ml_model/artifacts/model.joblib"
     
     model_config = SettingsConfigDict(
         env_file=".env",

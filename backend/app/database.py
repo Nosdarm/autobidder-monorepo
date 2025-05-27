@@ -4,7 +4,7 @@ from app.config import settings
 
 # Асинхронный движок
 engine = create_async_engine(
-    settings.database_url
+    settings.DATABASE_URL
     # echo=True, # Removed echo=True as per example's implication
 )
 

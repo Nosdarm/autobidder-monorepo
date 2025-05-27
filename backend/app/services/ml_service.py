@@ -1,4 +1,3 @@
-import os
 import logging
 import joblib
 import pandas as pd
@@ -13,9 +12,10 @@ from fastapi import HTTPException
 # Schemas are now imported from app.schemas.ml, but since this is a service,
 # it will take Pydantic models (schemas) as input and return them, or ORM models.
 from app.schemas.ml import PredictionFeaturesInput, PredictionResponse
+from app.config import settings
 
 # Global model variable and path (these should ideally be managed by a class or app state)
-MODEL_PATH_STR = os.getenv("MODEL_PATH", "app/ml_model/artifacts/model.joblib") # Ensure this path is correct relative to project root
+MODEL_PATH_STR = settings.MODEL_PATH # Ensure this path is correct relative to project root
 MODEL: Optional[Any] = None
 MODEL_PATH = Path(MODEL_PATH_STR)
 
