@@ -16,3 +16,4 @@ APScheduler>=3.6
 slowapi
 redis
 pydantic-settings
+passlib[bcrypt]>=0.7.0

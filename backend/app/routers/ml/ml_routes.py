@@ -22,6 +22,7 @@ from pydantic import BaseModel
 # MODEL_PATH_STR = os.getenv("MODEL_PATH", "app/ml_model/artifacts/model.joblib")
 import logging # Moved logging import
 from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi.responses import HTMLResponse # Added HTMLResponse
 
 # Import Pydantic Schemas from app.schemas.ml
 from app.schemas.ml import PredictionFeaturesInput, PredictionResponse, MetricsResponse # Added MetricsResponse
