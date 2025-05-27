@@ -9,7 +9,7 @@ from app.websocket_manager import manager # Added import
 from app.models.bid import Bid
 from app.models.profile import Profile
 # Removed BidOutcome import as it's now in bid_outcome_service
-from app.schemas.bid import BidCreateInput
+from app.schemas.bid import BidCreate as BidCreateInput
 # Removed BidOutcomeCreate import
 
 # Ensure Job model is imported if used for job_id validation, though not directly used in this snippet

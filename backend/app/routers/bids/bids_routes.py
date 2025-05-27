@@ -3,12 +3,10 @@ from sqlalchemy.orm import Session
 from app.services.bids_service import (
     create_bid_service,
     get_user_bids_service,
-    create_bid_service,
-    get_user_bids_service,
-    get_all_bids_service,
-    create_bid_outcome_service # Added import
+    get_all_bids_service
 )
-from app.schemas.bid import BidCreateInput, BidResponse, Bid  # Updated imports
+from app.services.bid_outcome_service import create_bid_outcome_service
+from app.schemas.bid import BidCreate as BidCreateInput, BidResponse, Bid
 from app.schemas.bid_outcome import BidOutcomeCreate, BidOutcome # Added imports
 from typing import List
 from app.auth.jwt import get_current_user_with_role

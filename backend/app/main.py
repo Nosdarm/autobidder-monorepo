@@ -8,6 +8,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.database import engine, Base
 from app.config import settings # Import settings
+from app.limiter import limiter # Import limiter
 
 from app.routers.auth.auth_routes                import router as auth_router
 from app.routers.user.user_api                    import router as user_router
@@ -27,7 +28,6 @@ from app.routers import websockets as ws_router # Import WebSocket router
 app = FastAPI(debug=settings.APP_DEBUG) # Use settings
 
 # Initialize Limiter for rate limiting
-limiter = Limiter(key_func=get_remote_address, default_limits=["5/minute"])
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -50,11 +50,11 @@ async def on_startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     await load_model_on_startup() # Load ML model
-    await start_scheduler() # Start scheduler
+    start_scheduler() # Start scheduler
 
 @app.on_event("shutdown")
 async def on_shutdown():
-    await shutdown_scheduler() # Shutdown scheduler
+    shutdown_scheduler() # Shutdown scheduler
 
 # Подключаем роутеры
 app.include_router(auth_router,             prefix="/auth",            tags=["Auth"])

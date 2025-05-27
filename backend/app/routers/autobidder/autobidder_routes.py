@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.ai_prompt import AIPrompt
-from app.schemas.ai_prompt import PreviewResponse  # Import the new schema
+from app.schemas.ai_prompt import AIPromptPreviewResponse as PreviewResponse
 from app.services.bid_generation_service import generate_bid_text_async
 
 
