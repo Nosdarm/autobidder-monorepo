@@ -7,7 +7,7 @@ class AIPrompt(Base):
     __tablename__ = "ai_prompts"
 
     id = Column(Integer, primary_key=True, index=True)
-    profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
+    profile_id = Column(String, ForeignKey("profiles.id"), nullable=False)
     name = Column(String, nullable=False)
     prompt_text = Column(String, nullable=False)
     is_active = Column(Boolean, default=False)

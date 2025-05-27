@@ -9,7 +9,7 @@ class AutobidLog(Base):
     __tablename__ = "autobid_logs"
 
     id = Column(Integer, primary_key=True, index=True)
-    profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
+    profile_id = Column(String, ForeignKey("profiles.id"), nullable=False)
     job_title = Column(String, nullable=False)
     job_link = Column(String, nullable=False)
     bid_text = Column(Text, nullable=True)
