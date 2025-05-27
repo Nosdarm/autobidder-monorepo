@@ -1,11 +1,17 @@
 from pydantic import BaseModel, Field
+from typing import Dict, Any, Optional # Added Dict, Any, Optional
+
+
+# Schema for ML model prediction input
+class PredictionFeaturesInput(BaseModel):
+    features: Dict[str, Any]
 
 
 class PredictionResponse(BaseModel):
-    score: float = Field(...,
-                         description="Predicted score for the job success")
-    comment: str = Field(...,
-                         description="Comment or reason for the prediction")
+    success_probability: Optional[float] = Field(None, description="Predicted success probability for the bid/job") # Made Optional
+    score: Optional[float] = Field(None, description="Predicted score for the job success") # Made Optional
+    comment: Optional[str] = Field(None, description="Comment or reason for the prediction") # Made Optional
+    model_info: Optional[str] = Field(None, description="Information about the model used for prediction") # Added model_info
 
 
 class MetricsResponse(BaseModel):

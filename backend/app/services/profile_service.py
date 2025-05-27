@@ -19,6 +19,8 @@ def create_profile_service(
         profile_type=data.profile_type,
         autobid_enabled=data.autobid_enabled,
         user_id=user_id,
+        skills=data.skills, # Added skills
+        experience_level=data.experience_level # Added experience_level
     )
     db.add(new_profile)
     db.commit()

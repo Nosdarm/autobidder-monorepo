@@ -17,6 +17,8 @@ class Profile(Base):
             "users.id",
             ondelete="CASCADE"),
         nullable=False)
+    skills = Column(JSON, nullable=True)
+    experience_level = Column(String, nullable=True)
 
     autobid_enabled = Column(Boolean, default=False)
 

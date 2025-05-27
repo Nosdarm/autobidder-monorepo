@@ -21,6 +21,7 @@ from app.routers.templates.shared_templates_routes import router as shared_templ
 from app.routers.autobidder.autobidder_routes     import router as autobidder_router
 from app.routers.autobidder.logs                  import router as autobid_logs_router
 from app.routers.ai.prompts                       import router as ai_prompts_router
+from app.routers.jobs_routes                      import router as jobs_router # Added jobs_router
 from app.routers import websockets as ws_router # Import WebSocket router
 
 app = FastAPI(debug=settings.APP_DEBUG) # Use settings
@@ -39,11 +40,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from app.services.ml_service import load_model_on_startup # Added ML model loading
+
+from app.scheduler.scheduler import start_scheduler, shutdown_scheduler # Added scheduler imports
+
 # Создаём таблицы при старте (асинхронный Engine поддерживает async with)
 @app.on_event("startup")
 async def on_startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    await load_model_on_startup() # Load ML model
+    await start_scheduler() # Start scheduler
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    await shutdown_scheduler() # Shutdown scheduler
 
 # Подключаем роутеры
 app.include_router(auth_router,             prefix="/auth",            tags=["Auth"])
@@ -58,6 +69,7 @@ app.include_router(shared_templates_router, prefix="/templates",       tags=["Sh
 app.include_router(autobidder_router,       prefix="/autobidder",      tags=["Autobidder"])
 app.include_router(autobid_logs_router,     prefix="/autobidder/logs", tags=["Autobidder Logs"])
 app.include_router(ai_prompts_router,       prefix="/ai",              tags=["AI Prompts"])
+app.include_router(jobs_router,             prefix="/jobs",            tags=["Jobs"]) # Added jobs_router
 app.include_router(ws_router.router,        prefix="/ws",              tags=["WebSockets"]) # Include WebSocket router
 
 # Лог всех маршрутов

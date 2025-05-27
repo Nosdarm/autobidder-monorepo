@@ -21,25 +21,22 @@ router = APIRouter(
 # If it's from app.schemas.agency, then `from pydantic import BaseModel`
 # might not be needed here.
 
-
-class AgencyProfileCreate(
-        BaseModel):  # This is also defined in app.schemas.agency.py
-    name: str
-    autobid_enabled: bool = False
+# AgencyProfileCreate is defined in app.schemas.agency
+from app.schemas.agency import AgencyProfileCreate
 
 
-@router.post("/create", response_model=ProfileOut)  # Add response_model
+@router.post("/create", response_model=ProfileOut)
 def create_agency_profile(
-    data: AgencyProfileCreate,
+    data: AgencyProfileCreate, # Use imported schema
     payload: dict = Depends(get_current_user_with_role),
     db: Session = Depends(get_db)
 ):
     profile = Profile(
         id=str(uuid4()),
         name=data.name,
-        type="agency",
+        profile_type="agency", # Corrected field name
         autobid_enabled=data.autobid_enabled,
-        owner_id=payload["user_id"]
+        user_id=payload["user_id"] # Corrected field name
     )
     db.add(profile)
     db.commit()
@@ -53,6 +50,6 @@ def get_user_agency_profiles(
     db: Session = Depends(get_db)
 ):
     return db.query(Profile).filter(
-        Profile.owner_id == payload["user_id"],
-        Profile.type == "agency"
+        Profile.user_id == payload["user_id"], # Corrected field name
+        Profile.profile_type == "agency" # Corrected field name
     ).all()

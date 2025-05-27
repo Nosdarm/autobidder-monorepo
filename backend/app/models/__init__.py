@@ -8,10 +8,10 @@ from .token_blacklist import TokenBlacklist
 from .autobid_log import AutobidLog
 from .autobid_settings import AutobidSettings
 from .ai_prompt import AIPrompt
-# Model from orm_prompt.py (if needed by other parts of app via from app.models import Prompt)
-# from .orm_prompt import Prompt as ORMPromptModel # Example, if it was also required
-# Model from prompt.py (if needed by other parts of app via from app.models import Prompt)
-# from .prompt import Prompt as PromptModel # Example, if it was also required (beware of name clashes)
+from .job import Job
+from .bid_outcome import BidOutcome
+from .profile_historical_stats import ProfileHistoricalStats
+from .orm_prompt import Prompt # Using ORM prompt
 
 # Optional: Define __all__ to specify what is exported when `from app.models import *` is used.
 # This also helps linters understand what's intentionally exported.
@@ -23,6 +23,8 @@ __all__ = [
     "AutobidLog",
     "AutobidSettings",
     "AIPrompt",
-    # "ORMPromptModel", # If it were included
-    # "PromptModel",    # If it were included
+    "Job",
+    "BidOutcome",
+    "ProfileHistoricalStats",
+    "Prompt", # Added Prompt
 ]
