@@ -18,7 +18,7 @@ from .bid_outcome import (
     BidOutcome,
 )
 from .job import JobBase, JobCreate, JobUpdate, Job, JobInDB
-from .ml import MLModelFeatures, MLModelPrediction
+from .ml import PredictionFeaturesInput as MLModelFeatures, PredictionResponse as MLModelPrediction
 from .profile import (
     ProfileBase,
     ProfileCreate,
