@@ -32,7 +32,7 @@ from .profile_historical_stats import (
     ProfileHistoricalStatsUpdate,
     ProfileHistoricalStats,
 )
-from .template import TemplateSchema # Assuming a base schema exists in template.py
+from .template import Template as TemplateSchema
 from .user import (
     UserBase as UserBaseFile, # Renamed to avoid clash if ORM UserBase is different
     UserResponse as UserResponseFile, # Renamed
