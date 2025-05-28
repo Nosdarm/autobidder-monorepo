@@ -47,9 +47,9 @@ export interface RegisterUserInfo {
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     try {
-      // The backend /auth/login endpoint expects 'username' not 'email'
+      // Backend /auth/login expects 'email'
       const response = await apiClient.post<AuthResponse>('/auth/login', {
-        username: credentials.email, // Map email to username
+        email: credentials.email, // Changed from username
         password: credentials.password,
       });
       return response.data;
@@ -64,7 +64,8 @@ export const authService = {
     try {
       // Assuming the backend /users/ endpoint is for registration
       // Adjust if there's a specific /auth/register endpoint
-      const response = await apiClient.post<User>('/users/', userInfo); 
+        const { name, ...payload } = userInfo; // Destructure to exclude name from payload
+        const response = await apiClient.post<User>('/auth/register', payload); 
       return response.data;
     } catch (error: any) {
       const errorMessage = error.response?.data?.detail || error.message || 'Registration failed';

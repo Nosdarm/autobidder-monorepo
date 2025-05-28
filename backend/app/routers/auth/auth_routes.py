@@ -2,20 +2,25 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession # Added
+from sqlalchemy.orm import Session # Will be removed if not used elsewhere
 
 from app.database import get_db
 from app.schemas.auth import RegisterInput, LoginInput, MessageResponse
-from app.schemas.user import UserOut, TokenResponse
+from app.schemas.user import UserOut, TokenResponse # UserOut is used
 from app.services.auth_service import (
     register_user_service,
+    login_user_service, # Added
     verify_email_service,
     get_current_user_service,
     logout_user_service,
 )
-from app.auth.jwt import create_access_token, get_current_user_with_role
-from app.models.user import User
-from app.utils.auth import verify_password
+# create_access_token, verify_password, User model are no longer needed directly in this file
+# if login logic is fully moved to service.
+# from app.auth.jwt import create_access_token, get_current_user_with_role
+# from app.models.user import User
+# from app.utils.auth import verify_password
+from app.auth.jwt import get_current_user_with_role # Keep this for /me
 
 router = APIRouter(tags=["Auth"])
 auth_scheme = HTTPBearer()
@@ -28,7 +33,7 @@ auth_scheme = HTTPBearer()
 )
 async def register_user(
     data: RegisterInput,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db), # Changed to AsyncSession
 ):
     return await register_user_service(data, db)
 
@@ -39,20 +44,9 @@ async def register_user(
 )
 async def login_user(
     data: LoginInput,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db), # Changed to AsyncSession
 ):
-    """
-    Аутентифицируем пользователя прямо в роутере,
-    чтобы отловить ошибки и сразу вернуть токен.
-    """
-    user = db.query(User).filter(User.email == data.email).first()
-    if not user or not verify_password(data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
-    token = create_access_token({"sub": user.email})
-    return {"access_token": token, "token_type": "bearer"}
+    return await login_user_service(data, db)
 
 
 @router.get(
@@ -61,7 +55,7 @@ async def login_user(
 )
 async def verify_email(
     token: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db), # Changed to AsyncSession
 ):
     return await verify_email_service(token, db)
 
@@ -72,7 +66,7 @@ async def verify_email(
 )
 async def read_current_user(
     payload: dict = Depends(get_current_user_with_role),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db), # Changed to AsyncSession
 ):
     return await get_current_user_service(payload, db)
 
@@ -82,7 +76,10 @@ async def read_current_user(
     response_model=None,
     status_code=status.HTTP_204_NO_CONTENT,
 )
-async def logout_user(
+async def logout_user( # Removed db: AsyncSession as it's not used by logout_user_service
     credentials: HTTPAuthorizationCredentials = Depends(auth_scheme),
 ):
-    return await logout_user_service(credentials.credentials)
+    # The logout_user_service does not require db session based on its current implementation.
+    # If it were to interact with the DB (e.g. for token blacklisting with DB),
+    # then db: AsyncSession = Depends(get_db) would be needed here.
+    return await logout_user_service(credentials.credentials) # This service is synchronous

@@ -1,0 +1,23 @@
+[
+  {
+    "id": "909cc746-04a6-4678-9704-aff87c9bead5",
+    "title": "Figma dashboard for SaaS product",
+    "description": "Looking for a UI/UX designer familiar with dashboards and Figma.",
+    "budget": 300,
+    "created_at": "2025-05-28T09:53:04.740160+00:00"
+  },
+  {
+    "id": "a7f18f8d-fa48-4b0d-babc-4d448afd0a9f",
+    "title": "Logo for fashion brand",
+    "description": "Need a stylish logo for a new clothing line.",
+    "budget": 50,
+    "created_at": "2025-05-28T09:53:04.740176+00:00"
+  },
+  {
+    "id": "b3173183-3117-4b5f-914e-baf632623179",
+    "title": "WordPress site redesign",
+    "description": "Redesign a WordPress site with Elementor.",
+    "budget": 150,
+    "created_at": "2025-05-28T09:53:04.740183+00:00"
+  }
+]

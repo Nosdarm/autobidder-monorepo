@@ -1,0 +1,14 @@
+[
+  {
+    "id": "7b211e3e-6128-49fe-af68-f976437cb1a1",
+    "email": "ruslankuznecov90@gmail.com",
+    "hashed_password": "$2b$12$Mx6eTAF0D17AEoZQoHhBr.lA29ApdPl3rIGPx0O3RHO5srhq3hpRC",
+    "role": "user"
+  },
+  {
+    "id": "472454e1-2513-4df0-8c07-34b8b78a03bf",
+    "email": "test@gmail.com",
+    "hashed_password": "$2b$12$QZwiBJ/0UTTz5TGOjknnYudfZwi07F33lwbvLBx4o0gm3GxU1uRAO",
+    "role": "user"
+  }
+]

@@ -49,7 +49,7 @@ from app.scheduler.scheduler import start_scheduler, shutdown_scheduler # Added 
 async def on_startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    await load_model_on_startup() # Load ML model
+    load_model_on_startup() # Load ML model
     start_scheduler() # Start scheduler
 
 @app.on_event("shutdown")
