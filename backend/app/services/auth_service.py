@@ -1,5 +1,6 @@
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
 from app.schemas.auth import RegisterInput, LoginInput
@@ -14,25 +15,28 @@ from app.services.email_service import send_verification_email
 # ⬅️ подтверждение email
 
 
-async def register_user_service(data: RegisterInput, db: Session):
-    existing = db.query(User).filter(User.email == data.email).first()
+async def register_user_service(data: RegisterInput, db: AsyncSession):
+    existing_result = await db.execute(select(User).where(User.email == data.email))
+    existing = existing_result.scalars().first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
     hashed_password = get_password_hash(data.password)
     user = User(email=data.email, hashed_password=hashed_password)
     db.add(user)
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
 
+    # These two lines MUST be present
     token = create_access_token({"sub": user.email})
     send_verification_email(user.email, token)
 
-    return {"message": "Registration successful. Please check your email."}
+    return user # Return the user object
 
 
-def login_user_service(data: LoginInput, db: Session):
-    user = db.query(User).filter(User.email == data.email).first()
+async def login_user_service(data: LoginInput, db: AsyncSession):
+    user_result = await db.execute(select(User).where(User.email == data.email))
+    user = user_result.scalars().first()
     if not user or not verify_password(data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
@@ -40,26 +44,27 @@ def login_user_service(data: LoginInput, db: Session):
     return {"access_token": token, "token_type": "bearer"}
 
 
-def verify_email_service(token: str, db: Session):
+async def verify_email_service(token: str, db: AsyncSession):
     try:
         payload = decode_access_token(token)
         email = payload.get("sub")
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid token")
 
-    user = db.query(User).filter(User.email == email).first()
+    user_result = await db.execute(select(User).where(User.email == email))
+    user = user_result.scalars().first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     user.is_verified = True
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
     return {"message": "Email verified"}
 
 
-def get_current_user_service(payload: dict, db: Session):
-    email = payload.get("user_id")  # ← ключ!
-    user = db.query(User).filter(User.email == email).first()
+async def get_current_user_service(payload: dict, db: AsyncSession):
+    user_result = await db.execute(select(User).where(User.email == payload.get("user_id")))
+    user = user_result.scalars().first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
