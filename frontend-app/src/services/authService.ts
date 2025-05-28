@@ -46,15 +46,22 @@ export interface RegisterUserInfo {
 // 3. AuthService Functions
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
+    console.log('authService.login called with credentials:', credentials); // New log
     try {
-      // Backend /auth/login expects 'email'
-      const response = await apiClient.post<AuthResponse>('/auth/login', {
-        email: credentials.email, // Changed from username
+      const payload = {
+        email: credentials.email,
         password: credentials.password,
-      });
+      };
+      console.log('Sending payload to /auth/login:', payload); // New log
+      const response = await apiClient.post<AuthResponse>('/auth/login', payload);
+      console.log('Received response from /auth/login:', response.data); // New log
       return response.data;
     } catch (error: any) {
-      // Axios errors have a 'response' property
+      console.error('Error during login API call:', error.response || error.message || error); // New log
+      // It's good to also log specific parts if available
+      if (error.response && error.response.data && error.response.data.detail) {
+        console.error('Backend error detail:', error.response.data.detail);
+      }
       const errorMessage = error.response?.data?.detail || error.message || 'Login failed';
       throw new Error(errorMessage);
     }

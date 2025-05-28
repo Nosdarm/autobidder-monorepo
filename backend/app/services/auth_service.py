@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
 from app.schemas.auth import RegisterInput, LoginInput
+from app.schemas.user import UserOut # Added import
 from app.utils.auth import (
     get_password_hash,
     verify_password,
@@ -35,13 +36,40 @@ async def register_user_service(data: RegisterInput, db: AsyncSession):
 
 
 async def login_user_service(data: LoginInput, db: AsyncSession):
+    print(f"Login attempt for email: {data.email}") # Log 1
+
     user_result = await db.execute(select(User).where(User.email == data.email))
     user = user_result.scalars().first()
-    if not user or not verify_password(data.password, user.hashed_password):
+
+    if not user:
+        print(f"Login failed: User not found for email: {data.email}") # Log 2 (failure case)
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    print(f"Login attempt: User found for email: {data.email}") # Log 2 (success case)
+    print(f"Login attempt: Stored hashed password: {user.hashed_password}") # Log 3
+
+    password_matches = verify_password(data.password, user.hashed_password)
+    print(f"Login attempt: Password verification result for {data.email}: {password_matches}") # Log 4
+
+    if not password_matches:
+        print(f"Login failed: Password mismatch for email: {data.email}")
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
+    print(f"Login successful for email: {data.email}")
     token = create_access_token({"sub": user.email})  # 👈 обязательно sub!
-    return {"access_token": token, "token_type": "bearer"}
+    
+    # Explicitly create UserOut instance from the ORM user model
+    # Assuming Pydantic v2+ usage with model_validate.
+    # If Pydantic v1, it would be UserOut.from_orm(user).
+    user_out_instance = UserOut.model_validate(user) 
+    
+    print(f"Login service: UserOut instance created: {user_out_instance.model_dump_json()}") # Add this log
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": user_out_instance # Pass the Pydantic model instance
+    }
 
 
 async def verify_email_service(token: str, db: AsyncSession):

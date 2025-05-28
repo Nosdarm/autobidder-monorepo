@@ -6,6 +6,8 @@ import * as z from 'zod';
 import { useToast } from '@/hooks/useToast';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
+// import authService from '@/services/authService'; // Removed as per instructions
+import { useAuth } from '@/components/contexts/AuthContext';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +30,7 @@ export default function LoginPage() {
   const { t } = useTranslation(); // Initialize useTranslation
   const navigate = useNavigate();
   const { showToastError, showToastSuccess } = useToast(); // Added showToastSuccess for completeness
+  const { login: contextLogin } = useAuth(); // Get login from useAuth context
   const loginSchema = createLoginSchema(t); // Create schema with t function
 
   const form = useForm<LoginFormValues>({
@@ -44,20 +47,22 @@ export default function LoginPage() {
   } = form;
 
   const onSubmit = async (data: LoginFormValues) => {
-    console.log("Form submitted with data:", data);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log("LoginPage: Form submitted with data:", data);
     try {
-      // Placeholder for actual login logic
-      // Simulate a success for demonstration, then switch to error
-      if (data.email === "success@example.com") {
-        showToastSuccess(t('auth.login.loginSuccess'));
-        navigate('/dashboard');
-      } else {
-        throw new Error(t('auth.login.loginErrorDefault'));
-      }
+      // CORRECT: Call the login function from AuthContext.
+      // 'data' (LoginFormValues) is compatible with LoginCredentials.
+      await contextLogin(data); 
+      
+      // AuthContext's login function handles setting state and localStorage.
+      // If it completes without error, login was successful internally.
+      showToastSuccess(t('auth.login.loginSuccess'));
+      navigate('/dashboard'); 
+
     } catch (error: any) {
-      showToastError(error.message || t('auth.login.loginErrorDefault'));
-      console.error("Login error", error);
+      // Errors from AuthContext's login (which includes errors from authService.login) will be caught here.
+      console.error("LoginPage: Login failed", error);
+      // The error object should already be formatted by authService or AuthContext
+      showToastError((error as Error).message || t('auth.login.loginErrorDefault'));
     }
   };
 

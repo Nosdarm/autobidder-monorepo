@@ -39,6 +39,7 @@ class UserRegisterResponse(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str = Field(..., description="JWT токен")
     token_type: str = Field(..., description="Тип токена, обычно 'bearer'")
+    user: UserOut = Field(..., description="Информация о пользователе")
 
 # Schema for RoleUpdateInput in user_roles_routes.py
 
