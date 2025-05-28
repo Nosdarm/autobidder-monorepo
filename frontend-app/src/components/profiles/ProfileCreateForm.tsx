@@ -1,55 +1,58 @@
-import React, { useEffect } from 'react'; // Added useEffect
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-// Label is not directly used, FormLabel from ui/form is used.
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { DialogFooter } from '@/components/ui/dialog';
 
-// Define Zod schema for profile creation/editing
-const profileFormSchema = z.object({
-  id: z.string().optional(), // ID will be present when editing
-  name: z.string().nonempty({ message: "Profile name is required" }).min(3, { message: "Name must be at least 3 characters" }),
+// Function to create schema with translated messages
+const createProfileFormSchema = (t: (key: string) => string) => z.object({
+  id: z.string().optional(),
+  name: z.string()
+    .nonempty({ message: t('profileForm.validation.nameRequired') })
+    .min(3, { message: t('profileForm.validation.nameMinLength', { min: 3 }) }),
   type: z.enum(["personal", "agency"], {
-    required_error: "Profile type is required.",
+    required_error: t('profileForm.validation.typeRequired'),
   }),
   autobidEnabled: z.boolean().default(false),
 });
 
-export type ProfileFormValues = z.infer<typeof profileFormSchema>;
+export type ProfileFormValues = z.infer<ReturnType<typeof createProfileFormSchema>>;
 
 interface ProfileCreateFormProps {
   onSave: (data: ProfileFormValues) => Promise<void>;
   onCancel: () => void;
   isSaving: boolean;
-  initialData?: ProfileFormValues | null; // Optional prop for editing
+  initialData?: ProfileFormValues | null;
 }
 
 export default function ProfileCreateForm({ onSave, onCancel, isSaving, initialData }: ProfileCreateFormProps) {
+  const { t } = useTranslation(); // Initialize useTranslation
+  const profileFormSchema = createProfileFormSchema(t); // Create schema with t function
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
-    defaultValues: initialData || { // Pre-fill if initialData exists
+    defaultValues: initialData || {
       id: undefined,
       name: '',
-      type: undefined,
+      type: undefined, 
       autobidEnabled: false,
     },
   });
 
-  const { handleSubmit, control, reset } = form; // Added reset
+  const { handleSubmit, control, reset } = form;
 
-  // Effect to reset form when initialData changes (for editing)
   useEffect(() => {
     if (initialData) {
       reset(initialData);
     } else {
-      // Reset to default empty values if creating a new profile after editing
       reset({
         id: undefined,
         name: '',
@@ -59,25 +62,24 @@ export default function ProfileCreateForm({ onSave, onCancel, isSaving, initialD
     }
   }, [initialData, reset]);
 
-  const submitButtonText = initialData?.id ? "Save Changes" : "Save Profile";
+  const submitButtonText = initialData?.id 
+    ? t("profileForm.saveButtonUpdate") 
+    : t("profileForm.saveButtonCreate");
 
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit(onSave)} className="space-y-6">
-        {/* ID field can be hidden if not needed in the form UI itself */}
-        {/* <FormField control={control} name="id" render={({ field }) => <Input type="hidden" {...field} />} /> */}
-        
         <FormField
           control={control}
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Profile Name</FormLabel>
+              <FormLabel>{t('profileForm.nameLabel')}</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., My Upwork Profile" {...field} />
+                <Input placeholder={t('profileForm.namePlaceholder')} {...field} />
               </FormControl>
               <FormDescription>
-                A descriptive name for this profile.
+                {t('profileForm.nameDescription')}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -89,20 +91,20 @@ export default function ProfileCreateForm({ onSave, onCancel, isSaving, initialD
           name="type"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Profile Type</FormLabel>
+              <FormLabel>{t('profileForm.typeLabel')}</FormLabel>
               <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a profile type" />
+                    <SelectValue placeholder={t('profileForm.typePlaceholder')} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="personal">Personal</SelectItem>
-                  <SelectItem value="agency">Agency</SelectItem>
+                  <SelectItem value="personal">{t('profileForm.typePersonal')}</SelectItem>
+                  <SelectItem value="agency">{t('profileForm.typeAgency')}</SelectItem>
                 </SelectContent>
               </Select>
               <FormDescription>
-                Choose "personal" for individual accounts, "agency" for teams.
+                {t('profileForm.typeDescription')}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -115,9 +117,9 @@ export default function ProfileCreateForm({ onSave, onCancel, isSaving, initialD
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
-                <FormLabel className="text-base">Autobid Enabled</FormLabel>
+                <FormLabel className="text-base">{t('profileForm.autobidLabel')}</FormLabel>
                 <FormDescription>
-                  Allow automatic bidding for jobs matching this profile.
+                  {t('profileForm.autobidDescription')}
                 </FormDescription>
               </div>
               <FormControl>
@@ -132,7 +134,7 @@ export default function ProfileCreateForm({ onSave, onCancel, isSaving, initialD
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSaving}>
-            Cancel
+            {t('profileForm.cancelButton')}
           </Button>
           <Button type="submit" disabled={isSaving}>
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

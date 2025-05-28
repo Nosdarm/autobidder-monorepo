@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { useTranslation } from 'react-i18next';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Loader2 as SpinnerIcon, AlertTriangle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton'; // For loading state
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableHeader,
@@ -40,8 +40,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-// import toast from 'react-hot-toast'; // Replaced by useToast
-// useToast is now used within the mutation hooks directly.
 
 import ProfileCreateForm, { ProfileFormValues } from '@/components/profiles/ProfileCreateForm';
 import { 
@@ -50,11 +48,11 @@ import {
   useUpdateProfile, 
   useDeleteProfile 
 } from '@/hooks/useProfileQueries';
-import type { Profile } from '@/services/profileService'; // Import Profile type
+import type { Profile } from '@/services/profileService';
 
 
 export default function ProfilesPage() {
-  const { t } = useTranslation(); // Initialize useTranslation
+  const { t } = useTranslation();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [profileToEdit, setProfileToEdit] = useState<Profile | null>(null);
@@ -62,7 +60,6 @@ export default function ProfilesPage() {
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState<Profile | null>(null);
 
-  // React Query hooks
   const { data: profiles = [], isLoading, isError, error } = useProfiles();
   const createProfileMutation = useCreateProfile();
   const updateProfileMutation = useUpdateProfile();
@@ -74,7 +71,6 @@ export default function ProfilesPage() {
   };
 
   const handleOpenEditModal = (profile: Profile) => {
-    // Ensure createdAt is a Date object if it's a string from the service
     const profileWithDate = { ...profile, createdAt: new Date(profile.createdAt) };
     setProfileToEdit(profileWithDate);
     setIsEditModalOpen(true);
@@ -87,17 +83,15 @@ export default function ProfilesPage() {
 
   const handleSaveProfile = async (formData: ProfileFormValues) => {
     try {
-      if (formData.id) { // Editing existing profile
-        // The 'id' is present in formData from ProfileCreateForm if editing
+      if (formData.id) {
         await updateProfileMutation.mutateAsync({ id: formData.id, data: formData });
-      } else { // Creating new profile
-        const { id, ...newProfileData } = formData; // Exclude potential undefined id
+      } else {
+        const { id, ...newProfileData } = formData;
         await createProfileMutation.mutateAsync(newProfileData);
       }
       setIsCreateModalOpen(false);
       setIsEditModalOpen(false);
     } catch (e) {
-      // Errors are handled by the mutation's onError, which shows a toast
       console.error("Failed to save profile:", e);
     }
   };
@@ -109,13 +103,10 @@ export default function ProfilesPage() {
       setIsDeleteAlertOpen(false);
       setProfileToDelete(null);
     } catch (e) {
-      // Errors are handled by the mutation's onError
       console.error("Failed to delete profile:", e);
     }
   };
 
-  // Prepare data for ProfileCreateForm, ensuring createdAt is handled if needed by the form
-  // (ProfileFormValues from Zod schema does not include createdAt)
   const currentModalProfileData = profileToEdit 
     ? { 
         id: profileToEdit.id, 
@@ -127,16 +118,13 @@ export default function ProfilesPage() {
 
   const modalOpenState = isCreateModalOpen || isEditModalOpen;
   const setModalOpenState = (isOpen: boolean) => {
-      if (!isOpen) { // Reset states when modal closes
+      if (!isOpen) {
           setIsCreateModalOpen(false);
           setIsEditModalOpen(false);
-          setProfileToEdit(null); // Clear profileToEdit when closing
-      } else {
-          // Logic to open is handled by specific handlers
+          setProfileToEdit(null);
       }
   };
   
-  // Updated to use t function
   const modalTitle = profileToEdit 
     ? t('profilesPage.editModalTitle') 
     : t('profilesPage.createModalTitle');
@@ -175,9 +163,10 @@ export default function ProfilesPage() {
     return (
       <div className="p-4 md:p-6 text-center">
         <AlertTriangle className="mx-auto h-12 w-12 text-red-500" />
-        <h2 className="mt-4 text-xl font-semibold text-red-600">Error Loading Profiles</h2>
-        <p className="mt-2 text-muted-foreground">{error?.message || "An unexpected error occurred."}</p>
-        {/* Optionally, add a retry button here */}
+        <h2 className="mt-4 text-xl font-semibold text-red-600">{t('profilesPage.error.title')}</h2>
+        <p className="mt-2 text-muted-foreground">
+          {error?.message || t('profilesPage.error.defaultMessage')}
+        </p>
       </div>
     );
   }
@@ -196,7 +185,6 @@ export default function ProfilesPage() {
         </Button>
       </div>
 
-      {/* Create/Edit Profile Dialog */}
       <Dialog open={modalOpenState} onOpenChange={setModalOpenState}>
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
@@ -212,7 +200,6 @@ export default function ProfilesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Profile Alert Dialog */}
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -237,7 +224,6 @@ export default function ProfilesPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Profiles Table */}
       <Card className="border shadow-sm rounded-lg">
         <Table>
           <TableCaption>{t('profilesPage.tableCaption')}</TableCaption>
@@ -266,12 +252,12 @@ export default function ProfilesPage() {
                       {profile.autobidEnabled ? t('common.enabled') : t('common.disabled')}
                     </Badge>
                   </TableCell>
-                  <TableCell>{format(new Date(profile.createdAt), 'PPpp')}</TableCell> {/* Ensure createdAt is Date */}
+                  <TableCell>{format(new Date(profile.createdAt), 'PPpp')}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
+                          <span className="sr-only">{t('profilesPage.actions.openMenuFor', { profileName: profile.name })}</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -279,14 +265,14 @@ export default function ProfilesPage() {
                         <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleOpenEditModal(profile)}>
                           <Edit className="mr-2 h-4 w-4" />
-                          {t('common.edit')} Profile
+                          {t('profilesPage.actions.editProfile')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleOpenDeleteAlert(profile)} className="text-red-600 hover:!text-red-600 focus:text-red-600">
                           <Trash2 className="mr-2 h-4 w-4" />
-                          {t('common.delete')} Profile
+                          {t('profilesPage.actions.deleteProfile')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem disabled> {/* Placeholder */}
+                        <DropdownMenuItem disabled> 
                           {t('common.viewAutobidLogs')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -308,7 +294,6 @@ export default function ProfilesPage() {
   );
 }
 
-// Helper component (already defined in previous step, ensure it's available or defined here)
 const Card = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={`rounded-lg border bg-card text-card-foreground shadow-sm ${className}`}

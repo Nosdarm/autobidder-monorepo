@@ -13,6 +13,33 @@
     "register": "Register"
   },
 
+  "dashboard": {
+    "autobidStatus": {
+      "unknown": "Unknown",
+      "active": "Active",
+      "inactive": "Inactive",
+      "error": "Error"
+    },
+    "error": {
+      "title": "Error Loading Dashboard Data",
+      "defaultMessage": "An unexpected error occurred."
+    },
+    "activeProfiles": {
+      "title": "Active Profiles",
+      "description": "Currently managed profiles",
+      "button": "Create/View Profiles"
+    },
+    "runningAutobidJobs": {
+      "title": "Running Autobid Jobs",
+      "descriptionSuffix": "jobs currently bidding"
+    },
+    "recentBids": {
+      "title": "Recent Bids",
+      "description": "Bids placed in the last 24 hours",
+      "button": "View Bid History"
+    }
+  },
+
   "profilesPage": {
     "title": "Profiles Management",
     "description": "Manage your job bidding profiles.",
@@ -29,7 +56,16 @@
     "tableHeaderAutobid": "Autobid",
     "tableHeaderCreatedAt": "Created At",
     "tableHeaderActions": "Actions",
-    "noProfilesFound": "No profiles found. Get started by creating one!"
+    "noProfilesFound": "No profiles found. Get started by creating one!",
+    "error": {
+      "title": "Error Loading Profiles",
+      "defaultMessage": "An unexpected error occurred."
+    },
+    "actions": {
+      "openMenuFor": "Open menu for {{profileName}}",
+      "editProfile": "Edit Profile",
+      "deleteProfile": "Delete Profile"
+    }
   },
 
   "profileForm": {
@@ -45,7 +81,167 @@
     "autobidDescription": "Allow automatic bidding for jobs matching this profile.",
     "saveButtonCreate": "Save Profile",
     "saveButtonUpdate": "Save Changes",
-    "cancelButton": "Cancel"
+    "cancelButton": "Cancel",
+    "validation": {
+      "nameRequired": "Profile name is required",
+      "nameMinLength": "Name must be at least {{min}} characters",
+      "typeRequired": "Profile type is required."
+    }
+  },
+
+  "aiPrompts": {
+    "title": "AI Prompts Library",
+    "description": "Manage your reusable AI prompts.",
+    "createPrompt": "Create Prompt",
+    "loading": "Loading AI prompts...",
+    "errorLoading": "Error loading prompts: {{errorMessage}}",
+    "table": {
+      "caption": "A list of your configured AI prompts.",
+      "headerName": "Name",
+      "headerProfile": "Associated Profile",
+      "headerActive": "Active",
+      "headerCreatedAt": "Created At",
+      "headerActions": "Actions",
+      "noPrompts": "No AI prompts found. Get started by creating one!"
+    },
+    "drawer": {
+      "editTitle": "Edit AI Prompt",
+      "createTitle": "Create New AI Prompt",
+      "editDescription": "Update the details for this AI prompt.",
+      "createDescription": "Fill in the details below to add a new AI prompt."
+    },
+    "deleteDialog": {
+      "title": "Confirm Deletion",
+      "areYouSure": "Are you sure you want to delete prompt \"{{promptName}}\"? This action cannot be undone.",
+      "confirmDelete": "Confirm Delete",
+      "cancel": "Cancel"
+    },
+    "previewDialog": {
+      "title": "Preview AI Prompt: {{promptName}}",
+      "description": "Enter text below to test the selected prompt. Placeholders like `{{'{PLACEHOLDER_NAME}'}}` in the prompt will be simulated.",
+      "testInputLabel": "Test Input (e.g., Vacancy Description)",
+      "testInputPlaceholder": "Paste relevant text here to test the prompt...",
+      "generatePreview": "Generate Preview",
+      "previewGeneratedSuccess": "Preview generated successfully!",
+      "noPreviewGenerated": "No preview generated.",
+      "generatedOutputLabel": "Generated Output",
+      "close": "Close"
+    },
+    "status": {
+      "activeYes": "Yes",
+      "activeNo": "No",
+      "noProfileAssociated": "N/A",
+      "unknownProfile": "Unknown Profile"
+    },
+    "actions": {
+      "label": "Actions",
+      "edit": "Edit",
+      "preview": "Preview",
+      "delete": "Delete",
+      "openMenuFor": "Open menu for {{promptName}}"
+    }
+  },
+
+  "bidHistory": {
+    "title": "Bid History & Logs",
+    "description": "Review past bidding activities and their outcomes.",
+    "exportButton": "Export CSV",
+    "exportNotImplemented": "CSV export functionality to be implemented.",
+    "filters": {
+      "showFiltersButton": "Show Filters",
+      "profileLabel": "Profile",
+      "allProfilesPlaceholder": "All Profiles",
+      "allProfilesOption": "All Profiles",
+      "dateRangeLabel": "Date Range",
+      "dateRangePlaceholder": "Pick a date range",
+      "statusLabel": "Status",
+      "clearFiltersButton": "Clear Filters",
+      "applyFiltersButton": "Apply Filters"
+    },
+    "table": {
+      "caption": "A list of recent bid activities.",
+      "updatingCaptionSuffix": "Updating...",
+      "headerProfileName": "Profile Name",
+      "headerVacancyId": "Vacancy ID",
+      "headerSubmittedAt": "Submitted At",
+      "headerResponseAt": "Response At",
+      "headerStatus": "Status",
+      "headerScore": "Score",
+      "errorLoading": "Error loading bid history: {{message}}",
+      "defaultError": "An unexpected error occurred.",
+      "notApplicable": "N/A",
+      "notApplicableScore": "N/A",
+      "noLogsFound": "No bid logs found matching your criteria."
+    },
+    "statusLabels": {
+      "submitted": "Submitted",
+      "successful": "Successful",
+      "failed": "Failed",
+      "viewed": "Viewed",
+      "pendingreview": "Pending Review"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {{pageNum}}"
+    }
+  },
+
+  "topAppBar": {
+    "defaultTitle": "Dashboard",
+    "toggleMenuAriaLabel": "Toggle menu",
+    "languageSwitcherAriaLabel": "Language switcher",
+    "languageEnglish": "English",
+    "languageSpanish": "Español",
+    "themeSwitcherAriaLabel": "Toggle theme",
+    "themeSwitcherSrOnly": "Toggle theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
+  },
+
+  "auth": {
+    "login": {
+      "title": "Login",
+      "description": "Enter your credentials to access your account.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Your password",
+      "loginButton": "Login",
+      "signupPrompt": "Don't have an account?",
+      "signupLink": "Register",
+      "forgotPasswordLink": "Forgot Password?",
+      "loginSuccess": "Logged in successfully!",
+      "loginErrorDefault": "Login failed. Please check your credentials or try again later."
+    },
+    "register": {
+      "title": "Create an Account",
+      "description": "Enter your details to register.",
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "Your username",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Choose a password",
+      "confirmPasswordLabel": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm your password",
+      "registerButton": "Create Account",
+      "loginPrompt": "Already have an account?",
+      "loginLink": "Login",
+      "registrationSuccess": "Registration successful! Please check your email to verify.",
+      "registrationErrorDefault": "Registration failed. Please try again."
+    },
+    "validation": {
+      "invalidEmail": "Invalid email address",
+      "emailRequired": "Email is required",
+      "passwordRequired": "Password is required",
+      "usernameRequired": "Username is required",
+      "usernameMinLength": "Username must be at least {{min}} characters",
+      "passwordMinLength": "Password must be at least {{min}} characters",
+      "confirmPasswordRequired": "Please confirm your password",
+      "passwordsDoNotMatch": "Passwords do not match"
+    }
   },
 
   "common": {

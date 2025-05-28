@@ -13,6 +13,33 @@
     "register": "Registrarse"
   },
 
+  "dashboard": {
+    "autobidStatus": {
+      "unknown": "Desconocido",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "error": "Error"
+    },
+    "error": {
+      "title": "Error al Cargar Datos del Tablero",
+      "defaultMessage": "Ocurrió un error inesperado."
+    },
+    "activeProfiles": {
+      "title": "Perfiles Activos",
+      "description": "Perfiles gestionados actualmente",
+      "button": "Crear/Ver Perfiles"
+    },
+    "runningAutobidJobs": {
+      "title": "Trabajos de Autobid en Ejecución",
+      "descriptionSuffix": "trabajos pujando actualmente"
+    },
+    "recentBids": {
+      "title": "Pujas Recientes",
+      "description": "Pujas realizadas en las últimas 24 horas",
+      "button": "Ver Historial de Pujas"
+    }
+  },
+
   "profilesPage": {
     "title": "Gestión de Perfiles",
     "description": "Gestiona tus perfiles de puja para trabajos.",
@@ -29,7 +56,16 @@
     "tableHeaderAutobid": "Autobid",
     "tableHeaderCreatedAt": "Creado en",
     "tableHeaderActions": "Acciones",
-    "noProfilesFound": "No se encontraron perfiles. ¡Empieza creando uno!"
+    "noProfilesFound": "No se encontraron perfiles. ¡Empieza creando uno!",
+    "error": {
+      "title": "Error al Cargar Perfiles",
+      "defaultMessage": "Ocurrió un error inesperado."
+    },
+    "actions": {
+      "openMenuFor": "Abrir menú para {{profileName}}",
+      "editProfile": "Editar Perfil",
+      "deleteProfile": "Eliminar Perfil"
+    }
   },
 
   "profileForm": {
@@ -45,7 +81,167 @@
     "autobidDescription": "Permitir pujas automáticas para trabajos que coincidan con este perfil.",
     "saveButtonCreate": "Guardar Perfil",
     "saveButtonUpdate": "Guardar Cambios",
-    "cancelButton": "Cancelar"
+    "cancelButton": "Cancelar",
+    "validation": {
+      "nameRequired": "El nombre del perfil es obligatorio",
+      "nameMinLength": "El nombre debe tener al menos {{min}} caracteres",
+      "typeRequired": "El tipo de perfil es obligatorio."
+    }
+  },
+
+  "aiPrompts": {
+    "title": "Biblioteca de Prompts de IA",
+    "description": "Gestiona tus prompts de IA reutilizables.",
+    "createPrompt": "Crear Prompt",
+    "loading": "Cargando prompts de IA...",
+    "errorLoading": "Error al cargar los prompts: {{errorMessage}}",
+    "table": {
+      "caption": "Una lista de tus prompts de IA configurados.",
+      "headerName": "Nombre",
+      "headerProfile": "Perfil Asociado",
+      "headerActive": "Activo",
+      "headerCreatedAt": "Creado en",
+      "headerActions": "Acciones",
+      "noPrompts": "No se encontraron prompts de IA. ¡Empieza creando uno!"
+    },
+    "drawer": {
+      "editTitle": "Editar Prompt de IA",
+      "createTitle": "Crear Nuevo Prompt de IA",
+      "editDescription": "Actualiza los detalles de este prompt de IA.",
+      "createDescription": "Completa los detalles a continuación para agregar un nuevo prompt de IA."
+    },
+    "deleteDialog": {
+      "title": "Confirmar Eliminación",
+      "areYouSure": "¿Estás seguro de que quieres eliminar el prompt \"{{promptName}}\"? Esta acción no se puede deshacer.",
+      "confirmDelete": "Confirmar Eliminación",
+      "cancel": "Cancelar"
+    },
+    "previewDialog": {
+      "title": "Vista Previa del Prompt de IA: {{promptName}}",
+      "description": "Ingresa texto a continuación para probar el prompt seleccionado. Los marcadores de posición como `{{'{PLACEHOLDER_NAME}'}}` en el prompt serán simulados.",
+      "testInputLabel": "Entrada de Prueba (ej., Descripción de Vacante)",
+      "testInputPlaceholder": "Pega texto relevante aquí para probar el prompt...",
+      "generatePreview": "Generar Vista Previa",
+      "previewGeneratedSuccess": "¡Vista previa generada con éxito!",
+      "noPreviewGenerated": "No se generó ninguna vista previa.",
+      "generatedOutputLabel": "Salida Generada",
+      "close": "Cerrar"
+    },
+    "status": {
+      "activeYes": "Sí",
+      "activeNo": "No",
+      "noProfileAssociated": "N/A",
+      "unknownProfile": "Perfil Desconocido"
+    },
+    "actions": {
+      "label": "Acciones",
+      "edit": "Editar",
+      "preview": "Vista Previa",
+      "delete": "Eliminar",
+      "openMenuFor": "Abrir menú para {{promptName}}"
+    }
+  },
+
+  "bidHistory": {
+    "title": "Historial de Ofertas y Registros",
+    "description": "Revisa las actividades de ofertas pasadas y sus resultados.",
+    "exportButton": "Exportar CSV",
+    "exportNotImplemented": "La funcionalidad de exportación CSV será implementada.",
+    "filters": {
+      "showFiltersButton": "Mostrar Filtros",
+      "profileLabel": "Perfil",
+      "allProfilesPlaceholder": "Todos los Perfiles",
+      "allProfilesOption": "Todos los Perfiles",
+      "dateRangeLabel": "Rango de Fechas",
+      "dateRangePlaceholder": "Elige un rango de fechas",
+      "statusLabel": "Estado",
+      "clearFiltersButton": "Limpiar Filtros",
+      "applyFiltersButton": "Aplicar Filtros"
+    },
+    "table": {
+      "caption": "Una lista de actividades de ofertas recientes.",
+      "updatingCaptionSuffix": "Actualizando...",
+      "headerProfileName": "Nombre del Perfil",
+      "headerVacancyId": "ID de Vacante",
+      "headerSubmittedAt": "Enviado En",
+      "headerResponseAt": "Respuesta En",
+      "headerStatus": "Estado",
+      "headerScore": "Puntuación",
+      "errorLoading": "Error al cargar el historial de ofertas: {{message}}",
+      "defaultError": "Ocurrió un error inesperado.",
+      "notApplicable": "N/A",
+      "notApplicableScore": "N/A",
+      "noLogsFound": "No se encontraron registros de ofertas que coincidan con tus criterios."
+    },
+    "statusLabels": {
+      "submitted": "Enviado",
+      "successful": "Exitoso",
+      "failed": "Fallido",
+      "viewed": "Visto",
+      "pendingreview": "Revisión Pendiente"
+    },
+    "pagination": {
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "page": "Página {{pageNum}}"
+    }
+  },
+
+  "topAppBar": {
+    "defaultTitle": "Tablero",
+    "toggleMenuAriaLabel": "Alternar menú",
+    "languageSwitcherAriaLabel": "Selector de idioma",
+    "languageEnglish": "Inglés",
+    "languageSpanish": "Español",
+    "themeSwitcherAriaLabel": "Alternar tema",
+    "themeSwitcherSrOnly": "Alternar tema",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro",
+    "themeSystem": "Sistema"
+  },
+
+  "auth": {
+    "login": {
+      "title": "Iniciar Sesión",
+      "description": "Ingresa tus credenciales para acceder a tu cuenta.",
+      "emailLabel": "Correo Electrónico",
+      "emailPlaceholder": "tu@ejemplo.com",
+      "passwordLabel": "Contraseña",
+      "passwordPlaceholder": "Tu contraseña",
+      "loginButton": "Iniciar Sesión",
+      "signupPrompt": "¿No tienes una cuenta?",
+      "signupLink": "Regístrate",
+      "forgotPasswordLink": "¿Olvidaste tu contraseña?",
+      "loginSuccess": "¡Inicio de sesión exitoso!",
+      "loginErrorDefault": "Error al iniciar sesión. Verifica tus credenciales o inténtalo de nuevo más tarde."
+    },
+    "register": {
+      "title": "Crear una Cuenta",
+      "description": "Ingresa tus detalles para registrarte.",
+      "usernameLabel": "Nombre de Usuario",
+      "usernamePlaceholder": "Tu nombre de usuario",
+      "emailLabel": "Correo Electrónico",
+      "emailPlaceholder": "tu@ejemplo.com",
+      "passwordLabel": "Contraseña",
+      "passwordPlaceholder": "Elige una contraseña",
+      "confirmPasswordLabel": "Confirmar Contraseña",
+      "confirmPasswordPlaceholder": "Confirma tu contraseña",
+      "registerButton": "Crear Cuenta",
+      "loginPrompt": "¿Ya tienes una cuenta?",
+      "loginLink": "Iniciar Sesión",
+      "registrationSuccess": "¡Registro exitoso! Por favor, revisa tu correo para verificar.",
+      "registrationErrorDefault": "Error en el registro. Por favor, inténtalo de nuevo."
+    },
+    "validation": {
+      "invalidEmail": "Dirección de correo electrónico inválida",
+      "emailRequired": "El correo electrónico es obligatorio",
+      "passwordRequired": "La contraseña es obligatoria",
+      "usernameRequired": "El nombre de usuario es obligatorio",
+      "usernameMinLength": "El nombre de usuario debe tener al menos {{min}} caracteres",
+      "passwordMinLength": "La contraseña debe tener al menos {{min}} caracteres",
+      "confirmPasswordRequired": "Por favor, confirma tu contraseña",
+      "passwordsDoNotMatch": "Las contraseñas no coinciden"
+    }
   },
 
   "common": {

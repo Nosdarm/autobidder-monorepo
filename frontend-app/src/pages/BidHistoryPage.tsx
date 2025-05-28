@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react'; // Added useEffect
+import React, { useState, useEffect } from 'react';
 import { format, subDays, addDays } from 'date-fns';
-import { CalendarIcon, DownloadIcon, FilterIcon, XIcon, AlertTriangle } from 'lucide-react'; // Added AlertTriangle
+import { CalendarIcon, DownloadIcon, FilterIcon, XIcon, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton'; // For loading state
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableHeader,
@@ -28,16 +29,16 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Using Card for filter panel
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { DateRange } from 'react-day-picker';
-import { Calendar } from "@/components/ui/calendar"; // shadcn/ui Calendar
+import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from '@/components/ui/badge';
-import { useBidHistory } from '@/hooks/useBidHistoryQueries'; // Import the hook
-import type { BidLogEntry, BidStatus, FilterState } from '@/services/bidHistoryService'; // Import types
+import { useBidHistory } from '@/hooks/useBidHistoryQueries';
+import type { BidLogEntry, BidStatus, FilterState } from '@/services/bidHistoryService';
 
 // Mock Profile Data for Select - This can be fetched via React Query if needed in a real app
 const mockProfilesForFilter = [
@@ -46,11 +47,13 @@ const mockProfilesForFilter = [
   { id: 'profile3', name: 'Side Gig - Quick Projects' },
 ];
 
+// These status values should ideally come from a shared source or be translated if they appear in UI directly
 const allStatusesForFilter: BidStatus[] = ["submitted", "successful", "failed", "viewed", "pending_review"];
 
 const ITEMS_PER_PAGE = 10;
 
 export default function BidHistoryPage() {
+  const { t } = useTranslation(); // Initialize useTranslation
   const { showToastSuccess } = useToast();
   
   const initialFilters: FilterState = {
@@ -58,13 +61,8 @@ export default function BidHistoryPage() {
     dateRange: undefined,
     statuses: [],
   };
-  // This 'activeFilters' state is what's passed to the useBidHistory hook.
-  // It's updated only when "Apply Filters" is clicked.
   const [activeFilters, setActiveFilters] = useState<FilterState>(initialFilters);
-  
-  // This 'draftFilters' state is for the form elements, updated on change.
   const [draftFilters, setDraftFilters] = useState<FilterState>(initialFilters);
-  
   const [currentPage, setCurrentPage] = useState(1);
 
   const { 
@@ -72,87 +70,89 @@ export default function BidHistoryPage() {
     isLoading, 
     isError, 
     error,
-    isFetching, // Use isFetching for loading states during refetch/pagination
+    isFetching,
   } = useBidHistory(activeFilters, currentPage, ITEMS_PER_PAGE);
 
   const currentTableData = paginatedData?.logs || [];
   const totalPages = paginatedData?.totalPages || 0;
 
   const handleApplyFilters = () => {
-    setActiveFilters(draftFilters); // This will trigger the useBidHistory hook to refetch
+    setActiveFilters(draftFilters);
     setCurrentPage(1); 
   };
 
   const handleClearFilters = () => {
     setDraftFilters(initialFilters);
-    setActiveFilters(initialFilters); // This will also trigger a refetch
+    setActiveFilters(initialFilters);
     setCurrentPage(1);
   };
 
   const handleExportCSV = () => {
-    showToastSuccess("CSV export functionality to be implemented.");
-    // For export, you might want to fetch all data matching current filters,
-    // not just the current page. This would be a separate API call or logic.
+    // For export, you might want to fetch all data matching current filters
+    showToastSuccess(t('bidHistory.exportNotImplemented')); 
     console.log("Export CSV clicked. Current active filters:", activeFilters);
     console.log("Currently displayed data:", currentTableData);
   };
   
   const getStatusBadgeVariant = (status: BidStatus): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
-      case "successful": return "default"; // Often green
+      case "successful": return "default";
       case "submitted": return "secondary";
-      case "pending_review": return "outline"; // Yellowish/Blueish
+      case "pending_review": return "outline";
       case "viewed": return "outline";
       case "failed": return "destructive";
       default: return "secondary";
     }
+  };
+  
+  // Helper for status translation
+  const translateStatus = (status: BidStatus) => {
+    return t(`bidHistory.statusLabels.${status.replace("_", "")}` as const, status.replace("_", " "));
   };
 
   return (
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Bid History & Logs</h1>
+          <h1 className="text-3xl font-bold">{t('bidHistory.title')}</h1>
           <p className="text-muted-foreground">
-            Review past bidding activities and their outcomes.
+            {t('bidHistory.description')}
           </p>
         </div>
         <Button onClick={handleExportCSV} variant="outline">
-          <DownloadIcon className="mr-2 h-4 w-4" /> Export CSV
+          <DownloadIcon className="mr-2 h-4 w-4" /> {t('bidHistory.exportButton')}
         </Button>
       </div>
 
       <Collapsible className="space-y-4">
         <CollapsibleTrigger asChild>
           <Button variant="outline" className="w-full sm:w-auto">
-            <FilterIcon className="mr-2 h-4 w-4" /> Show Filters
+            <FilterIcon className="mr-2 h-4 w-4" /> {t('bidHistory.filters.showFiltersButton')}
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
           <Card className="p-6 shadow-lg">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Profile Filter */}
               <div className="space-y-2">
-                <Label htmlFor="profile-filter">Profile</Label>
+                <Label htmlFor="profile-filter">{t('bidHistory.filters.profileLabel')}</Label>
                 <Select 
                   value={draftFilters.profileId || ""}
                   onValueChange={(value) => setDraftFilters(prev => ({ ...prev, profileId: value === "all" ? null : value }))}
                 >
                   <SelectTrigger id="profile-filter">
-                    <SelectValue placeholder="All Profiles" />
+                    <SelectValue placeholder={t('bidHistory.filters.allProfilesPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Profiles</SelectItem>
-                    {mockProfilesForFilter.map(profile => ( // Use mockProfilesForFilter
+                    <SelectItem value="all">{t('bidHistory.filters.allProfilesOption')}</SelectItem>
+                    {mockProfilesForFilter.map(profile => (
                       <SelectItem key={profile.id} value={profile.id}>{profile.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Date Range Filter */}
               <div className="space-y-2">
-                <Label htmlFor="date-range-filter">Date Range</Label>
+                <Label htmlFor="date-range-filter">{t('bidHistory.filters.dateRangeLabel')}</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -171,7 +171,7 @@ export default function BidHistoryPage() {
                           format(draftFilters.dateRange.from, "LLL dd, y")
                         )
                       ) : (
-                        <span>Pick a date range</span>
+                        <span>{t('bidHistory.filters.dateRangePlaceholder')}</span>
                       )}
                     </Button>
                   </PopoverTrigger>
@@ -188,11 +188,10 @@ export default function BidHistoryPage() {
                 </Popover>
               </div>
 
-              {/* Status Filter */}
               <div className="space-y-2 lg:col-span-1 md:col-span-2">
-                <Label>Status</Label>
+                <Label>{t('bidHistory.filters.statusLabel')}</Label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 items-center pt-1">
-                  {allStatusesForFilter.map(status => ( // Use allStatusesForFilter
+                  {allStatusesForFilter.map(status => (
                     <div key={status} className="flex items-center space-x-2">
                       <Checkbox 
                         id={`status-${status}`}
@@ -207,7 +206,7 @@ export default function BidHistoryPage() {
                         }}
                       />
                       <Label htmlFor={`status-${status}`} className="font-normal capitalize text-sm">
-                        {status.replace("_", " ")}
+                        {translateStatus(status)}
                       </Label>
                     </div>
                   ))}
@@ -216,10 +215,10 @@ export default function BidHistoryPage() {
             </div>
             <div className="flex justify-end space-x-3 mt-6">
               <Button variant="ghost" onClick={handleClearFilters}>
-                <XIcon className="mr-2 h-4 w-4" /> Clear Filters
+                <XIcon className="mr-2 h-4 w-4" /> {t('bidHistory.filters.clearFiltersButton')}
               </Button>
               <Button onClick={handleApplyFilters} disabled={isFetching}>
-                <FilterIcon className="mr-2 h-4 w-4" /> Apply Filters
+                <FilterIcon className="mr-2 h-4 w-4" /> {t('bidHistory.filters.applyFiltersButton')}
               </Button>
             </div>
           </Card>
@@ -228,15 +227,15 @@ export default function BidHistoryPage() {
 
       <Card className="border shadow-sm rounded-lg">
         <Table>
-          <TableCaption>A list of recent bid activities. {isFetching && "(Updating...)"}</TableCaption>
+          <TableCaption>{t('bidHistory.table.caption')} {isFetching && `(${t('bidHistory.table.updatingCaptionSuffix')})`}</TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead>Profile Name</TableHead>
-              <TableHead>Vacancy ID</TableHead>
-              <TableHead>Submitted At</TableHead>
-              <TableHead>Response At</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Score</TableHead>
+              <TableHead>{t('bidHistory.table.headerProfileName')}</TableHead>
+              <TableHead>{t('bidHistory.table.headerVacancyId')}</TableHead>
+              <TableHead>{t('bidHistory.table.headerSubmittedAt')}</TableHead>
+              <TableHead>{t('bidHistory.table.headerResponseAt')}</TableHead>
+              <TableHead>{t('bidHistory.table.headerStatus')}</TableHead>
+              <TableHead className="text-right">{t('bidHistory.table.headerScore')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -255,7 +254,7 @@ export default function BidHistoryPage() {
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center text-red-600">
                   <AlertTriangle className="mx-auto h-6 w-6 mb-2" />
-                  Error loading bid history: {error?.message || "An unexpected error occurred."}
+                  {t('bidHistory.table.errorLoading', { message: error?.message || t('bidHistory.table.defaultError') })}
                 </TableCell>
               </TableRow>
             ) : currentTableData.length > 0 ? (
@@ -264,19 +263,19 @@ export default function BidHistoryPage() {
                   <TableCell className="font-medium">{log.profileName}</TableCell>
                   <TableCell>{log.vacancyId}</TableCell>
                   <TableCell>{format(new Date(log.submittedAt), 'PPpp')}</TableCell>
-                  <TableCell>{log.responseAt ? format(new Date(log.responseAt), 'PPpp') : 'N/A'}</TableCell>
+                  <TableCell>{log.responseAt ? format(new Date(log.responseAt), 'PPpp') : t('bidHistory.table.notApplicable')}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(log.status)} className="capitalize">
-                      {log.status.replace("_", " ")}
+                      {translateStatus(log.status)}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">{log.score ?? 'N/A'}</TableCell>
+                  <TableCell className="text-right">{log.score ?? t('bidHistory.table.notApplicableScore')}</TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                  No bid logs found matching your criteria.
+                  {t('bidHistory.table.noLogsFound')}
                 </TableCell>
               </TableRow>
             )}
@@ -284,7 +283,7 @@ export default function BidHistoryPage() {
         </Table>
       </Card>
 
-      {totalPages > 0 && ( // Show pagination only if there are pages
+      {totalPages > 0 && (
         <Pagination>
           <PaginationContent>
             <PaginationItem>
@@ -292,9 +291,9 @@ export default function BidHistoryPage() {
                 href="#" 
                 onClick={(e) => { e.preventDefault(); if(currentPage > 1) setCurrentPage(prev => prev - 1); }}
                 className={currentPage === 1 ? "pointer-events-none opacity-50" : undefined} 
+                aria-label={t('bidHistory.pagination.previous')}
               />
             </PaginationItem>
-            {/* Simplified pagination display for brevity, can be enhanced */}
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
               (totalPages <= 5 || (pageNum >= currentPage - 1 && pageNum <= currentPage + 1) || pageNum === 1 || pageNum === totalPages) ? (
                 <PaginationItem key={pageNum}>
@@ -302,6 +301,7 @@ export default function BidHistoryPage() {
                     href="#" 
                     onClick={(e) => { e.preventDefault(); setCurrentPage(pageNum); }}
                     isActive={currentPage === pageNum}
+                    aria-label={t('bidHistory.pagination.page', { pageNum })}
                   >
                     {pageNum}
                   </PaginationLink>
@@ -315,6 +315,7 @@ export default function BidHistoryPage() {
                 href="#" 
                 onClick={(e) => { e.preventDefault(); if(currentPage < totalPages) setCurrentPage(prev => prev + 1); }}
                 className={currentPage === totalPages ? "pointer-events-none opacity-50" : undefined}
+                aria-label={t('bidHistory.pagination.next')}
               />
             </PaginationItem>
           </PaginationContent>
