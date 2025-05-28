@@ -10,6 +10,17 @@ from app.config import settings # Import settings
 
 
 def send_verification_email(to_email: str, token: str):
+    # Add logging for Mailtrap settings
+    print(f"Attempting to send verification email. Mailtrap Settings:")
+    print(f"  MAILTRAP_HOST: {settings.MAILTRAP_HOST}")
+    print(f"  MAILTRAP_PORT: {settings.MAILTRAP_PORT}")
+    print(f"  MAILTRAP_USER: {settings.MAILTRAP_USER}")
+    # Consider security implications of logging PASS in production
+    print(f"  MAILTRAP_PASS: {'********' if settings.MAILTRAP_PASS else None}") # Basic masking
+    print(f"  MAILTRAP_FROM: {settings.MAILTRAP_FROM}")
+    print(f"  EMAIL_VERIFICATION_HOST: {settings.EMAIL_VERIFICATION_HOST}")
+    print(f"  To Email: {to_email}")
+
     verify_link = f"{settings.EMAIL_VERIFICATION_HOST}/auth/verify?token={token}" # Use settings
     subject = "Verify your email"
     body = f"Click the link to verify your email:\n\n{verify_link}"

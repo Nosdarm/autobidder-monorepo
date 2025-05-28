@@ -61,13 +61,17 @@ export const authService = {
   },
 
   register: async (userInfo: RegisterUserInfo): Promise<User> => {
+    console.log('authService.register called with userInfo:', userInfo); // New log
     try {
       // Assuming the backend /users/ endpoint is for registration
       // Adjust if there's a specific /auth/register endpoint
         const { name, ...payload } = userInfo; // Destructure to exclude name from payload
+        console.log('Sending payload to /auth/register:', payload); // New log
         const response = await apiClient.post<User>('/auth/register', payload); 
+        console.log('Received response from /auth/register:', response.data); // New log
       return response.data;
     } catch (error: any) {
+      console.error('Error during registration:', error.response || error.message || error); // New log
       const errorMessage = error.response?.data?.detail || error.message || 'Registration failed';
       throw new Error(errorMessage);
     }

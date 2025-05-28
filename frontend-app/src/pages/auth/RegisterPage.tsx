@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { useToast } from '@/hooks/useToast';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
+import authService from '@/services/authService';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,15 +56,14 @@ export default function RegisterPage() {
   } = form;
 
   const onSubmit = async (data: RegisterFormValues) => {
-    console.log("Register form submitted with data:", data);
-    await new Promise(resolve => setTimeout(resolve, 1000));
     try {
-      // Placeholder for actual registration logic
-      // Simulate a success scenario
+      await authService.register({
+        name: data.username,
+        email: data.email,
+        password: data.password,
+      });
       showToastSuccess(t('auth.register.registrationSuccess'));
       navigate('/login');
-      // Or simulate an error:
-      // throw new Error(t('auth.register.registrationErrorDefault'));
     } catch (error: any) {
       showToastError(error.message || t('auth.register.registrationErrorDefault'));
       console.error("Registration error", error);
