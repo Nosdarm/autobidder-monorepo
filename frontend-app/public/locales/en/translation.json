@@ -1,0 +1,60 @@
+{
+  "appName": "Autobidder",
+  "welcomeMessage": "Welcome to Autobidder",
+  
+  "navigation": {
+    "dashboard": "Dashboard",
+    "profiles": "Profiles",
+    "aiPrompts": "AI Prompts",
+    "bidHistory": "Bid History",
+    "autobidSettings": "Autobid Settings",
+    "mlAnalytics": "ML Analytics",
+    "login": "Login",
+    "register": "Register"
+  },
+
+  "profilesPage": {
+    "title": "Profiles Management",
+    "description": "Manage your job bidding profiles.",
+    "createProfileButton": "Create Profile",
+    "createModalTitle": "Create New Profile",
+    "createModalDescription": "Fill in the details below to add a new bidding profile.",
+    "editModalTitle": "Edit Profile",
+    "editModalDescription": "Update the details for this profile.",
+    "deleteAlertTitle": "Confirm Deletion",
+    "deleteAlertDescription": "Are you sure you want to delete profile \"{{profileName}}\"? This action cannot be undone.",
+    "tableCaption": "A list of your configured profiles.",
+    "tableHeaderName": "Name",
+    "tableHeaderType": "Type",
+    "tableHeaderAutobid": "Autobid",
+    "tableHeaderCreatedAt": "Created At",
+    "tableHeaderActions": "Actions",
+    "noProfilesFound": "No profiles found. Get started by creating one!"
+  },
+
+  "profileForm": {
+    "nameLabel": "Profile Name",
+    "namePlaceholder": "e.g., My Upwork Profile",
+    "nameDescription": "A descriptive name for this profile.",
+    "typeLabel": "Profile Type",
+    "typePlaceholder": "Select a profile type",
+    "typeDescription": "Choose \"personal\" for individual accounts, \"agency\" for teams.",
+    "typePersonal": "Personal",
+    "typeAgency": "Agency",
+    "autobidLabel": "Autobid Enabled",
+    "autobidDescription": "Allow automatic bidding for jobs matching this profile.",
+    "saveButtonCreate": "Save Profile",
+    "saveButtonUpdate": "Save Changes",
+    "cancelButton": "Cancel"
+  },
+
+  "common": {
+    "actions": "Actions",
+    "edit": "Edit",
+    "delete": "Delete",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "confirmDeleteButton": "Confirm Delete",
+    "viewAutobidLogs": "View Autobid Logs"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "appName": "Autobidder",
+  "welcomeMessage": "Bienvenido a Autobidder",
+  
+  "navigation": {
+    "dashboard": "Tablero",
+    "profiles": "Perfiles",
+    "aiPrompts": "Prompts IA",
+    "bidHistory": "Historial de Ofertas",
+    "autobidSettings": "Configuración Autobid",
+    "mlAnalytics": "Análisis ML",
+    "login": "Iniciar Sesión",
+    "register": "Registrarse"
+  },
+
+  "profilesPage": {
+    "title": "Gestión de Perfiles",
+    "description": "Gestiona tus perfiles de puja para trabajos.",
+    "createProfileButton": "Crear Perfil",
+    "createModalTitle": "Crear Nuevo Perfil",
+    "createModalDescription": "Completa los detalles para añadir un nuevo perfil de puja.",
+    "editModalTitle": "Editar Perfil",
+    "editModalDescription": "Actualiza los detalles de este perfil.",
+    "deleteAlertTitle": "Confirmar Eliminación",
+    "deleteAlertDescription": "¿Estás seguro de que quieres eliminar el perfil \"{{profileName}}\"? Esta acción no se puede deshacer.",
+    "tableCaption": "Una lista de tus perfiles configurados.",
+    "tableHeaderName": "Nombre",
+    "tableHeaderType": "Tipo",
+    "tableHeaderAutobid": "Autobid",
+    "tableHeaderCreatedAt": "Creado en",
+    "tableHeaderActions": "Acciones",
+    "noProfilesFound": "No se encontraron perfiles. ¡Empieza creando uno!"
+  },
+
+  "profileForm": {
+    "nameLabel": "Nombre del Perfil",
+    "namePlaceholder": "Ej., Mi Perfil de Upwork",
+    "nameDescription": "Un nombre descriptivo para este perfil.",
+    "typeLabel": "Tipo de Perfil",
+    "typePlaceholder": "Selecciona un tipo de perfil",
+    "typeDescription": "Elige \"personal\" para cuentas individuales, \"agencia\" para equipos.",
+    "typePersonal": "Personal",
+    "typeAgency": "Agencia",
+    "autobidLabel": "Autobid Activado",
+    "autobidDescription": "Permitir pujas automáticas para trabajos que coincidan con este perfil.",
+    "saveButtonCreate": "Guardar Perfil",
+    "saveButtonUpdate": "Guardar Cambios",
+    "cancelButton": "Cancelar"
+  },
+
+  "common": {
+    "actions": "Acciones",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "enabled": "Activado",
+    "disabled": "Desactivado",
+    "confirmDeleteButton": "Confirmar Eliminación",
+    "viewAutobidLogs": "Ver Registros de Autobid"
+  }
+}

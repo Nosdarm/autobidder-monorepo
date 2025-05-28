@@ -1,70 +1,121 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-// import { Button } from '@/components/ui/button'; // Assuming shadcn/ui
-// import { Input } from '@/components/ui/input';
-// import { Label } from '@/components/ui/label';
-// import { useToast } from '@/components/ui/use-toast'; // Assuming shadcn/ui toast
-import { useAuth } from '@/components/contexts/AuthContext'; // Conceptual path
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+// import toast from 'react-hot-toast'; // Replaced by useToast
+import { useToast } from '@/hooks/useToast'; // Import useToast
+import { Loader2 } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"; // Import Form components
+// import { useAuth } from '@/components/contexts/AuthContext'; // Conceptual, will be used later
+
+// Define Zod schema for login form
+const loginSchema = z.object({
+  email: z.string().email({ message: "Invalid email address" }).nonempty({ message: "Email is required" }),
+  password: z.string().nonempty({ message: "Password is required" }),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const { login } = useAuth(); // Conceptual hook
+  // const { login } = useAuth(); // Conceptual, will be used later
   const navigate = useNavigate();
-  // const { toast } = useToast(); // Conceptual shadcn/ui toast
+  const { showToastError } = useToast(); // Use the custom hook
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const {
+    handleSubmit,
+    formState: { isSubmitting },
+  } = form;
+
+  // Placeholder submit function
+  const onSubmit = async (data: LoginFormValues) => {
+    console.log("Form submitted with data:", data);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
     try {
-      await login({ email, password });
-      // toast({ title: 'Success', description: 'Logged in successfully!' });
-      alert('Logged in successfully! (Conceptual Toast)');
-      navigate('/dashboard'); // Navigate to a protected route
+      // Placeholder for actual login logic:
+      // await login(data); 
+      // toast.success('Logged in successfully!'); // For success, if needed
+      // navigate('/dashboard');
+
+      // Simulate an error for now
+      throw new Error("Invalid credentials or server error");
     } catch (error: any) {
-      // toast({ variant: "destructive", title: 'Error', description: error.message || 'Login failed. Please check your credentials.' });
-      alert(`Login failed: ${error?.message || 'Please check your credentials.'} (Conceptual Toast)`);
+      showToastError(error.message || 'Login failed. Please check your credentials.');
       console.error("Login error", error);
     }
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        <div>
-          <label htmlFor="email" style={{ display: 'block', marginBottom: '5px' }}>Email (Conceptual Label)</label>
-          <input 
-            type="email" 
-            id="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            required 
-            style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-            placeholder="you@example.com"
-          />
-        </div>
-        <div>
-          <label htmlFor="password" style={{ display: 'block', marginBottom: '5px' }}>Password (Conceptual Label)</label>
-          <input 
-            type="password" 
-            id="password" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            required 
-            style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-            placeholder="Your password"
-          />
-        </div>
-        <button type="submit" style={{ padding: '10px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-          Login (Conceptual Button)
-        </button>
-      </form>
-      <p style={{ marginTop: '15px', textAlign: 'center' }}>
-        Don't have an account? <Link to="/register" style={{ color: '#007bff' }}>Register</Link>
-      </p>
-      <p style={{ marginTop: '10px', textAlign: 'center' }}>
-        <Link to="/forgot-password" style={{ color: '#007bff' }}>Forgot Password?</Link>
-      </p>
-    </div>
+    <Card className="w-full sm:w-96 mx-auto mt-24">
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl">Login</CardTitle>
+        <CardDescription>Enter your credentials to access your account.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="you@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Your password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Login
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+      <CardFooter className="flex flex-col items-center space-y-2">
+        <p className="text-sm text-muted-foreground">
+          Don't have an account?{' '}
+          <Link to="/auth/register" className="font-medium text-primary hover:underline">
+            Register
+          </Link>
+        </p>
+        {/* Optional: Forgot password link
+        <p className="text-sm text-muted-foreground">
+          <Link to="/auth/forgot-password" className="font-medium text-primary hover:underline">
+            Forgot Password?
+          </Link>
+        </p>
+        */}
+      </CardFooter>
+    </Card>
   );
 }

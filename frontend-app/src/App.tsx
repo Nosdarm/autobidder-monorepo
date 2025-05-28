@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { ThemeProvider } from 'next-themes'; // Import ThemeProvider
 import { AuthProvider, useAuth } from './components/contexts/AuthContext';
+import { Toaster } from 'react-hot-toast'; // Import Toaster
 
 // Auth Pages
 import LoginPage from './pages/auth/LoginPage';
@@ -12,6 +14,9 @@ import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilesPage from './pages/ProfilesPage'; // Added import
+import BidHistoryPage from './pages/BidHistoryPage'; // Import BidHistoryPage
+import BidDetailPage from './pages/BidDetailPage'; // Import BidDetailPage
+import MLAnalyticsPage from './pages/MLAnalyticsPage'; // Import MLAnalyticsPage
 
 // Import the main layout component
 import MainLayout from './components/layout/MainLayout'; // Updated import
@@ -75,6 +80,9 @@ function AppRoutes() {
         <Route element={<MainLayout />}> {/* MainLayout now wraps all protected routes */}
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/profiles" element={<ProfilesPage />} /> {/* New Route Added */}
+          <Route path="/bids" element={<BidHistoryPage />} /> {/* Add /bids route */}
+          <Route path="/bids/:id" element={<BidDetailPage />} /> {/* Add /bids/:id route */}
+          <Route path="/ml/metrics" element={<MLAnalyticsPage />} /> {/* Add /ml/metrics route */}
           {/* Example: <Route path="/prompts" element={<AIPromptsPage />} /> */}
         </Route>
       </Route>
@@ -88,10 +96,13 @@ function AppRoutes() {
 function App() {
   return (
     <Router>
-      <AuthProvider> {/* AuthProvider wraps everything that needs auth context */}
-        {/* AppRoutes now contains the actual route definitions */}
-        <AppRoutes /> 
-      </AuthProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <AuthProvider> {/* AuthProvider wraps everything that needs auth context */}
+          <Toaster position="top-center" reverseOrder={false} /> {/* Add Toaster here */}
+          {/* AppRoutes now contains the actual route definitions */}
+          <AppRoutes /> 
+        </AuthProvider>
+      </ThemeProvider>
     </Router>
   );
 }

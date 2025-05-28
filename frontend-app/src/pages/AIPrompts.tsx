@@ -1,207 +1,361 @@
-import React, { useEffect, useState } from 'react';
-import api from '@/lib/axios'; // Updated axios import
-import { AxiosError } from 'axios'; // For type checking
-import { useParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { format } from 'date-fns';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Loader2 as SpinnerIcon } from 'lucide-react';
 
-type AIPrompt = {
-  id: string;          // Changed from number
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableCaption,
+} from '@/components/ui/table';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter, // For Preview Dialog
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Textarea } from '@/components/ui/textarea'; // For Preview Dialog
+import { Label } from '@/components/ui/label'; // For Preview Dialog
+import toast from 'react-hot-toast';
+
+import PromptForm, { PromptFormValues } from '@/components/ai/PromptForm';
+
+// AI Prompt Data Interface
+interface AIPrompt {
+  id: string;
   name: string;
-  prompt_text: string;
-  profile_id: string;  // Changed from number
-  is_active: boolean;
-};
+  promptText: string;
+  profileId?: string | null; // Allow null
+  isActive: boolean;
+  createdAt: Date;
+}
 
-const AIPrompts: React.FC = () => {
-  const { profileId } = useParams<{ profileId: string }>(); // Ensure profileId is typed as string
-  const [prompts, setPrompts] = useState<AIPrompt[]>([]);
-  const [name, setName] = useState('');
-  const [promptText, setPromptText] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null); // Changed to string
-  const [previewInputs, setPreviewInputs] = useState<Record<string, string>>({}); // Key changed to string
-  const [previewResults, setPreviewResults] = useState<Record<string, string>>({}); // Key changed to string
-  const [previewErrorMessages, setPreviewErrorMessages] = useState<Record<string, string>>({}); // Key changed to string
+// Mock Profile Data
+interface ProfileLike {
+  id: string;
+  name: string;
+}
+const mockProfilesForSelect: ProfileLike[] = [
+  { id: '1', name: 'My Upwork Freelancer' },
+  { id: '2', name: 'Agency Client X' },
+  { id: '3', name: 'Test Profile Alpha' },
+];
 
-  const fetchPrompts = async () => {
-    if (!profileId) return;
-    const res = await api.get(`/prompts/profile/${profileId}`); // Use api
-    setPrompts(res.data);
+const mockAIPrompts: AIPrompt[] = [
+  { id: 'p1', name: 'Cover Letter Intro', promptText: 'Write a compelling opening paragraph for a cover letter for a {JOB_TITLE} role focusing on {SKILL_1} and {SKILL_2}. The company is {COMPANY_NAME}.', profileId: '1', isActive: true, createdAt: new Date(2023, 10, 20) },
+  { id: 'p2', name: 'Project Summary Generator', promptText: 'Summarize a project based on the following key points: {KEY_POINTS}. The project goal was {PROJECT_GOAL}.', isActive: false, createdAt: new Date(2023, 11, 5) },
+  { id: 'p3', name: 'Follow-up Email Template', promptText: 'Draft a polite follow-up email after a job application for {JOB_TITLE} at {COMPANY_NAME}. Mention interest in {SPECIFIC_ASPECT}.', profileId: '2', isActive: true, createdAt: new Date() },
+];
+
+export default function AIPromptsPage() {
+  const [prompts, setPrompts] = useState<AIPrompt[]>(mockAIPrompts);
+  
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [promptToEdit, setPromptToEdit] = useState<AIPrompt | null>(null);
+  
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [promptToDelete, setPromptToDelete] = useState<AIPrompt | null>(null);
+  
+  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+  const [promptToPreview, setPromptToPreview] = useState<AIPrompt | null>(null);
+  const [previewInputText, setPreviewInputText] = useState('');
+  const [previewOutputText, setPreviewOutputText] = useState('');
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+
+  const [isSavingPrompt, setIsSavingPrompt] = useState(false);
+  const [isDeletingPrompt, setIsDeletingPrompt] = useState(false);
+
+  const isLoading = false; // Mock page loading state
+
+  const handleOpenCreateDrawer = () => {
+    setPromptToEdit(null);
+    setIsCreateDrawerOpen(true);
   };
 
-  useEffect(() => {
-    fetchPrompts();
-  }, [profileId]);
+  const handleOpenEditDrawer = (prompt: AIPrompt) => {
+    setPromptToEdit(prompt);
+    setIsEditDrawerOpen(true);
+  };
 
-  const handleSave = async () => {
-    if (!name || !promptText || !profileId) return;
+  const handleOpenDeleteAlert = (prompt: AIPrompt) => {
+    setPromptToDelete(prompt);
+    setIsDeleteAlertOpen(true);
+  };
+  
+  const handleOpenPreviewDialog = (prompt: AIPrompt) => {
+    setPromptToPreview(prompt);
+    setPreviewInputText(''); // Reset input/output for new preview
+    setPreviewOutputText('');
+    setIsPreviewDialogOpen(true);
+  };
 
-    if (editingId) {
-      await api.put(`/prompts/${editingId}`, { name, prompt_text: promptText }); 
-    } else {
-      // Ensure profileId is defined before using it. The check at the start of function should handle this.
-      if (!profileId) {
-        console.error("Profile ID is undefined, cannot save prompt.");
-        // Optionally set an error message for the user here
-        return;
-      }
-      await api.post(`/prompts/`, { 
-        name,
-        prompt_text: promptText,
-        profile_id: profileId, // Changed from parseInt(profileId)
-        is_active: false
-      });
+  const handleSavePrompt = async (data: PromptFormValues) => {
+    setIsSavingPrompt(true);
+    console.log('Saving AI prompt with data:', data);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    if (data.id) { // Editing existing prompt
+      setPrompts(prevPrompts => prevPrompts.map(p => p.id === data.id ? { ...p, ...data, promptText: data.promptText, profileId: data.profileId } as AIPrompt : p));
+      toast.success(`Prompt "${data.name}" updated successfully!`);
+    } else { // Creating new prompt
+      const newPrompt: AIPrompt = {
+        ...data,
+        id: String(Date.now()),
+        createdAt: new Date(),
+        promptText: data.promptText,
+        profileId: data.profileId,
+      };
+      setPrompts(prevPrompts => [...prevPrompts, newPrompt]);
+      toast.success(`Prompt "${data.name}" created successfully!`);
     }
 
-    setName('');
-    setPromptText('');
-    setEditingId(null);
-    fetchPrompts();
+    setIsSavingPrompt(false);
+    setIsCreateDrawerOpen(false);
+    setIsEditDrawerOpen(false);
+  };
+  
+  const handleConfirmDelete = async () => {
+    if (!promptToDelete) return;
+    setIsDeletingPrompt(true);
+    console.log('Deleting AI prompt with ID:', promptToDelete.id);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    setPrompts(prevPrompts => prevPrompts.filter(p => p.id !== promptToDelete.id));
+    toast.success(`Prompt "${promptToDelete.name}" deleted successfully!`);
+
+    setIsDeletingPrompt(false);
+    setIsDeleteAlertOpen(false);
+    setPromptToDelete(null);
   };
 
-  const handleEdit = (prompt: AIPrompt) => {
-    setName(prompt.name);
-    setPromptText(prompt.prompt_text);
-    setEditingId(prompt.id); // prompt.id is now string
+  const handleGeneratePreview = async () => {
+    if (!promptToPreview) return;
+    setIsPreviewLoading(true);
+    setPreviewOutputText('');
+    console.log('Generating preview for prompt:', promptToPreview.name, 'with input:', previewInputText);
+    // Simulate AI generation
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Replace placeholders in prompt text with input. A more robust replacement is needed for real use.
+    let generated = promptToPreview.promptText.replace(/{[^{}]+}/g, `[${previewInputText || 'TEST_INPUT'}]`);
+    generated += `\n\n--- (Simulated AI Output using input: "${previewInputText}") ---`;
+    setPreviewOutputText(generated);
+    setIsPreviewLoading(false);
   };
 
-  const handleDelete = async (id: string) => { // Changed id to string
-    await api.delete(`/prompts/${id}`); 
-    fetchPrompts();
+  if (isLoading) {
+    return <div>Loading AI prompts...</div>;
+  }
+
+  const currentDrawerPromptData = promptToEdit ? promptToEdit : undefined;
+  const drawerOpenState = isCreateDrawerOpen || isEditDrawerOpen;
+  const setDrawerOpenState = (isOpen: boolean) => {
+      if (isCreateDrawerOpen && !isOpen) setIsCreateDrawerOpen(false);
+      if (isEditDrawerOpen && !isOpen) setIsEditDrawerOpen(false);
   };
+  const drawerTitle = promptToEdit ? "Edit AI Prompt" : "Create New AI Prompt";
+  const drawerDescription = promptToEdit 
+    ? "Update the details for this AI prompt." 
+    : "Fill in the details below to add a new AI prompt.";
 
-  const setActivePrompt = async (id: string) => { // Changed id to string
-    await api.post(`/prompts/${id}/set-active`); 
-    fetchPrompts();
-  };
-
-  const handlePreview = async (id: string, description: string) => { // Changed id to string
-    // Clear previous errors and results for this prompt
-    setPreviewErrorMessages(prev => ({ ...prev, [id]: '' }));
-    setPreviewResults(prev => ({ ...prev, [id]: '' }));
-
-    if (!description) {
-      setPreviewErrorMessages(prev => ({ ...prev, [id]: 'Пожалуйста, введите описание джобы.' }));
-      return;
-    }
-
-    try {
-      const res = await api.post(`/prompts/${id}/preview`, { description }); // Use api
-      setPreviewResults((prev) => ({ ...prev, [id]: res.data.preview }));
-    } catch (error) {
-      console.error("Error during preview generation:", error);
-      if (error instanceof AxiosError && error.response?.status === 429) {
-        setPreviewErrorMessages((prev) => ({
-          ...prev,
-          [id]: 'Вы слишком часто делаете запросы. Пожалуйста, подождите минуту.'
-        }));
-      } else if (error instanceof AxiosError && error.response) {
-        setPreviewErrorMessages((prev) => ({
-          ...prev,
-          [id]: `Ошибка: ${error.response.data.detail || error.message}`
-        }));
-      } 
-      else {
-        setPreviewErrorMessages((prev) => ({
-          ...prev,
-          [id]: 'Произошла неизвестная ошибка при генерации превью.'
-        }));
-      }
-    }
+  const getProfileNameById = (profileId?: string | null) => {
+    if (!profileId) return 'N/A';
+    return mockProfilesForSelect.find(p => p.id === profileId)?.name || 'Unknown Profile';
   };
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
-      <h2 className="text-xl font-bold mb-4">AI-промты для профиля #{profileId}</h2>
-
-      <div className="space-y-2 mb-6">
-        <input
-          type="text"
-          placeholder="Название"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full border p-2 rounded"
-        />
-        <textarea
-          placeholder="Текст промта"
-          value={promptText}
-          onChange={(e) => setPromptText(e.target.value)}
-          rows={4}
-          className="w-full border p-2 rounded"
-        />
-        <button
-          onClick={handleSave}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          {editingId ? 'Сохранить изменения' : 'Добавить промт'}
-        </button>
+    <div className="p-4 md:p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">AI Prompts Library</h1>
+          <p className="text-sm text-muted-foreground">Manage your reusable AI prompts.</p>
+        </div>
+        <Button onClick={handleOpenCreateDrawer}>
+          <PlusCircle className="mr-2 h-4 w-4" /> Create Prompt
+        </Button>
       </div>
 
-      <ul className="space-y-6">
-        {prompts.map((prompt) => (
-          <li
-            key={prompt.id}
-            className={`border p-4 rounded shadow-sm ${prompt.is_active ? 'border-green-500' : ''}`}
-          >
-            <div className="font-semibold flex items-center justify-between">
-              {prompt.name}
-              {prompt.is_active && <span className="text-green-600 text-sm ml-2">[активный]</span>}
+      {/* Create/Edit Prompt Drawer */}
+      <Drawer open={drawerOpenState} onOpenChange={setDrawerOpenState}>
+        <DrawerContent>
+          <div className="mx-auto w-full max-w-2xl">
+            <DrawerHeader className="pt-6 px-4">
+              <DrawerTitle>{drawerTitle}</DrawerTitle>
+              <DrawerDescription>{drawerDescription}</DrawerDescription>
+            </DrawerHeader>
+            <div className="overflow-y-auto max-h-[calc(100vh-160px)]">
+              <PromptForm
+                onSave={handleSavePrompt}
+                onCancel={() => setDrawerOpenState(false)}
+                isSaving={isSavingPrompt}
+                profiles={mockProfilesForSelect}
+                initialData={currentDrawerPromptData}
+              />
             </div>
-            <div className="text-sm text-gray-700 whitespace-pre-line mb-2">{prompt.prompt_text}</div>
+          </div>
+        </DrawerContent>
+      </Drawer>
 
-            <textarea
-              placeholder="Введите описание джобы для теста"
-              value={previewInputs[prompt.id] || ''}
-              onChange={(e) =>
-                setPreviewInputs((prev) => ({ ...prev, [prompt.id]: e.target.value }))
-              }
-              rows={3}
-              className="w-full border rounded p-2 text-sm"
-            />
-            <button
-              onClick={() => handlePreview(prompt.id, previewInputs[prompt.id] || '')}
-              className="mt-1 text-purple-600 hover:underline text-sm"
+      {/* Delete Prompt Alert Dialog */}
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete prompt "{promptToDelete?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPromptToDelete(null)} disabled={isDeletingPrompt}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete} 
+              disabled={isDeletingPrompt}
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
-              Сгенерировать по описанию
-            </button>
+              {isDeletingPrompt ? <SpinnerIcon className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Confirm Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-            {previewResults[prompt.id] && (
-              <div className="mt-2 p-2 bg-gray-100 text-sm rounded border">
-                <strong>Предпросмотр:</strong>
-                <p>{previewResults[prompt.id]}</p>
+      {/* Preview Prompt Dialog */}
+      <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Preview AI Prompt: {promptToPreview?.name}</DialogTitle>
+            <DialogDescription>
+              Enter text below to test the selected prompt. Placeholders like `{{'{PLACEHOLDER_NAME}'}}` in the prompt will be simulated.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="preview-input" className="text-sm font-medium">Test Input (e.g., Vacancy Description)</Label>
+              <Textarea
+                id="preview-input"
+                placeholder="Paste relevant text here to test the prompt..."
+                value={previewInputText}
+                onChange={(e) => setPreviewInputText(e.target.value)}
+                className="mt-1 min-h-[100px]"
+              />
+            </div>
+            <Button onClick={handleGeneratePreview} disabled={isPreviewLoading} className="w-full">
+              {isPreviewLoading ? <SpinnerIcon className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Generate Preview
+            </Button>
+            {previewOutputText && (
+              <div className="mt-4 space-y-2">
+                <Label className="text-sm font-medium">Generated Output</Label>
+                <div className="p-3 bg-muted rounded-md text-sm whitespace-pre-wrap max-h-60 overflow-y-auto">
+                  {previewOutputText}
+                </div>
               </div>
             )}
-            {previewErrorMessages[prompt.id] && (
-              <p className="text-sm text-red-500 mt-1">
-                {previewErrorMessages[prompt.id]}
-              </p>
-            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPreviewDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-            <div className="mt-3 flex gap-3 flex-wrap">
-              <button
-                onClick={() => handleEdit(prompt)}
-                className="text-blue-600 hover:underline text-sm"
-              >
-                Редактировать
-              </button>
-              <button
-                onClick={() => handleDelete(prompt.id)}
-                className="text-red-600 hover:underline text-sm"
-              >
-                Удалить
-              </button>
-              {!prompt.is_active && (
-                <button
-                  onClick={() => setActivePrompt(prompt.id)}
-                  className="text-green-600 hover:underline text-sm"
-                >
-                  Сделать активным
-                </button>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
+      {/* AI Prompts Table */}
+      <Card className="border shadow-sm rounded-lg">
+        <Table>
+          <TableCaption>A list of your configured AI prompts.</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[250px]">Name</TableHead>
+              <TableHead>Associated Profile</TableHead>
+              <TableHead>Active</TableHead>
+              <TableHead className="text-right w-[100px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {prompts.length > 0 ? (
+              prompts.map((prompt) => (
+                <TableRow key={prompt.id}>
+                  <TableCell className="font-medium">{prompt.name}</TableCell>
+                  <TableCell>{getProfileNameById(prompt.profileId)}</TableCell>
+                  <TableCell>
+                    <Badge variant={prompt.isActive ? 'default' : 'outline'}
+                           className={prompt.isActive ? 'bg-green-500 hover:bg-green-600' : ''}>
+                      {prompt.isActive ? 'Yes' : 'No'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => handleOpenEditDrawer(prompt)}>
+                          <Edit className="mr-2 h-4 w-4" /> Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleOpenPreviewDialog(prompt)}>
+                          <Eye className="mr-2 h-4 w-4" /> Preview
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleOpenDeleteAlert(prompt)} className="text-red-600 hover:!text-red-600 focus:text-red-600">
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} className="h-24 text-center">
+                  No AI prompts found. Get started by creating one!
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
-};
+}
 
-export default AIPrompts;
+const Card = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={`rounded-lg border bg-card text-card-foreground shadow-sm ${className}`}
+    {...props}
+  />
+);

@@ -1,0 +1,69 @@
+name: Deploy Frontend to Vercel
+
+on:
+  push:
+    branches:
+      - main # Trigger deployment when changes are pushed to the main branch
+
+jobs:
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+
+    # Environment variables for Vercel and build-time configuration
+    # These should be configured as secrets in the GitHub repository settings
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      # Example: Passing build-time environment variables to Vercel build
+      # These can be set directly here if they are not secret,
+      # or referenced from secrets if they are.
+      # Vercel also allows setting these in the Vercel project settings.
+      # If VITE_API_BASE_URL is set in Vercel project environment variables,
+      # it will be available during the `vercel build` step.
+      # Alternatively, you can pass them using --build-env for `vercel build`
+      # For example: VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL_PRODUCTION }}
+
+    defaults:
+      run:
+        # Assuming the workflow file is in frontend-app/.github/workflows,
+        # the default working directory for script steps will be frontend-app.
+        # If the Vercel project root is frontend-app, this is correct.
+        # If Vercel expects commands from the repo root but operates on a subdirectory,
+        # adjustments might be needed (e.g. Vercel project settings for root directory).
+        # For now, we assume frontend-app is the root for Vercel.
+        working-directory: ./ # This means the root of the checkout, which is frontend-app itself due to workflow path
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        # No specific path needed if workflow is within frontend-app and that's what we're deploying
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x # Specify Node.js version
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Project Settings
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        # This command links the local directory (frontend-app) to the Vercel project
+        # specified by VERCEL_ORG_ID and VERCEL_PROJECT_ID.
+
+      - name: Build Project Artifacts
+        # VITE_API_BASE_URL needs to be available to the build process.
+        # If it's set as an environment variable in Vercel project settings for the Production environment,
+        # `vercel build --prod` should automatically pick it up.
+        # Alternatively, pass it explicitly:
+        # run: VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL_PRODUCTION }} vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        # Or using --build-env for multiple variables:
+        # run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} --build-env VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL_PRODUCTION }}
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy Project Artifacts to Vercel
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        # --prebuilt flag indicates that we are deploying artifacts built in the previous step.
+        # --prod flag aliases the deployment to production domains.
