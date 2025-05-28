@@ -64,7 +64,7 @@ export const authService = {
     try {
       // Assuming the backend /users/ endpoint is for registration
       // Adjust if there's a specific /auth/register endpoint
-      const response = await apiClient.post<User>('/users/', userInfo); 
+      const response = await apiClient.post<User>('/users/register', userInfo); 
       return response.data;
     } catch (error: any) {
       const errorMessage = error.response?.data?.detail || error.message || 'Registration failed';
