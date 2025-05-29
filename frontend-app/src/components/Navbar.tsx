@@ -125,7 +125,7 @@ const Navbar = () => {
         <Link to="/dashboard" className="hover:underline">
           Главная
         </Link>
-        <Link to="/profile" className="hover:underline">
+        <Link to="/profiles" className="hover:underline">
           Профили
         </Link>
         {user && (

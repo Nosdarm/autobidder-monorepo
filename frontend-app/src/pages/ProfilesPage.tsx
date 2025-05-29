@@ -240,24 +240,40 @@ export default function ProfilesPage() {
           </TableHeader>
           <TableBody>
             {profiles && profiles.length > 0 ? (
-              profiles.map((profile) => (
-                <TableRow key={profile.id}>
-                  <TableCell className="font-medium">{profile.name}</TableCell>
-                  <TableCell>
-                    <Badge variant={profile.type === 'agency' ? 'secondary' : 'outline'}>
-                      {profile.type.charAt(0).toUpperCase() + profile.type.slice(1)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={profile.autobidEnabled ? 'default' : 'destructive'} 
-                           className={profile.autobidEnabled ? 'bg-green-500 hover:bg-green-600' : ''}>
-                      {profile.autobidEnabled ? t('common.enabled') : t('common.disabled')}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{format(new Date(profile.createdAt), 'PPpp')}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+              profiles.map((profile) => {
+                let formattedDate = 'N/A'; // Default or placeholder string
+                if (profile.createdAt) {
+                  try {
+                    const dateObj = new Date(profile.createdAt);
+                    if (!isNaN(dateObj.getTime())) { // Check if date is valid
+                      formattedDate = format(dateObj, 'PPpp');
+                    } else {
+                      // Optional: Log a warning for invalid date strings if helpful for debugging
+                      console.warn(`Invalid date format for profile ID ${profile.id}: ${profile.createdAt}`);
+                    }
+                  } catch (error) {
+                    // Optional: Log an error if new Date() or format() itself throws for some reason
+                    console.error(`Error formatting date for profile ID ${profile.id}:`, error);
+                  }
+                }
+                return (
+                  <TableRow key={profile.id}>
+                    <TableCell className="font-medium">{profile.name}</TableCell>
+                    <TableCell>
+                      <Badge variant={profile.type === 'agency' ? 'secondary' : 'outline'}>
+                        {profile.type.charAt(0).toUpperCase() + profile.type.slice(1)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={profile.autobidEnabled ? 'default' : 'destructive'}
+                             className={profile.autobidEnabled ? 'bg-green-500 hover:bg-green-600' : ''}>
+                        {profile.autobidEnabled ? t('common.enabled') : t('common.disabled')}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{formattedDate}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
                           <span className="sr-only">{t('profilesPage.actions.openMenuFor', { profileName: profile.name })}</span>
                           <MoreHorizontal className="h-4 w-4" />

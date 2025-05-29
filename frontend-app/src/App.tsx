@@ -96,6 +96,10 @@ function AppRoutes() {
           <Route path="/bids" element={<BidHistoryPage />} /> {/* Add /bids route */}
           <Route path="/bids/:id" element={<BidDetailPage />} /> {/* Add /bids/:id route */}
           <Route path="/ml/metrics" element={<MLAnalyticsPage />} /> {/* Add /ml/metrics route */}
+          {/* TODO: The 'AI Prompts' page (/prompts) is not yet implemented. */}
+          {/* The following route definition is a placeholder and currently commented out. */}
+          {/* Any direct navigation or links to '/prompts' will be caught by the wildcard */}
+          {/* fallback route and redirect to the homepage. */}
           {/* Example: <Route path="/prompts" element={<AIPromptsPage />} /> */}
         </Route>
       </Route>
