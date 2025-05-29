@@ -46,6 +46,17 @@ export default function SideNav() {
               AI Prompts
             </NavLink>
           </li>
+          {user?.account_type === 'agency' && (
+            <li className="mt-1">
+              <NavLink
+                to="/team"
+                className={({ isActive }) => `${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}
+              >
+                <span className="mr-2">👨‍👩‍👧‍👦</span> {/* Placeholder Icon for Team */}
+                Team Management
+              </NavLink>
+            </li>
+          )}
           {/* Add other conceptual links as needed */}
           {/* <li><NavLink to="/bids" className={({isActive}) => `${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}>Bids</NavLink></li> */}
           {/* <li><NavLink to="/settings" className={({isActive}) => `${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}>Settings</NavLink></li> */}

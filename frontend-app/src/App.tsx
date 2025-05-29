@@ -19,6 +19,7 @@ import BidHistoryPage from './pages/BidHistoryPage'; // Import BidHistoryPage
 import BidDetailPage from './pages/BidDetailPage'; // Import BidDetailPage
 import MLAnalyticsPage from './pages/MLAnalyticsPage'; // Import MLAnalyticsPage
 import AIPromptsPage from './pages/AIPromptsPage'; // Add this import
+import TeamPage from './pages/TeamPage'; // Add this import
 
 // Import the main layout component
 import MainLayout from './components/layout/MainLayout'; // Updated import
@@ -99,6 +100,7 @@ function AppRoutes() {
           <Route path="/ml/metrics" element={<MLAnalyticsPage />} /> {/* Add /ml/metrics route */}
           {/* AI Prompts page - Placeholder currently active. */}
           <Route path="/prompts" element={<AIPromptsPage />} />
+          <Route path="/team" element={<TeamPage />} />
         </Route>
       </Route>
 

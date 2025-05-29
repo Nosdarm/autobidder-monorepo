@@ -28,6 +28,7 @@ export interface User {
   is_active?: boolean;
   is_verified?: boolean;
   role?: string; // e.g., 'user', 'admin', 'superadmin'
+  account_type?: 'individual' | 'agency'; // Add this line
   // Add other user fields as necessary
 }
 
