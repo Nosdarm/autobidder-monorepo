@@ -36,13 +36,24 @@ jobs:
       - name: Run linters
         run: npm run lint
 
-      - name: Run tests
-        # This step will likely fail or do nothing if 'npm test' is not configured.
-        # This is acceptable for now as we are setting up the CI structure.
-        # To prevent failure if 'test' script is missing, can use:
-        # run: npm test || true
-        # Or define a placeholder test script in package.json: "test": "echo \"No tests specified\" && exit 0"
-        run: npm test --if-present # Runs only if 'test' script exists
+      - name: Run unit and integration tests
+        run: npm test
 
       - name: Build application
         run: npm run build
+
+      - name: Run Cypress E2E tests
+        run: npm run ci:cy
+        env:
+          # Optionally set CYPRESS_BASE_URL if your Cypress tests need it explicitly
+          # and start-server-and-test doesn't implicitly handle it.
+          # For instance, if cypress.config.ts doesn't use a relative path or
+          # if tests don't adapt to the preview server's port automatically.
+          # CYPRESS_BASE_URL: http://localhost:4173 # Default Vite preview port
+          # However, start-server-and-test should pass the URL to Cypress if configured correctly.
+          # The 'e2e' script in package.json is just 'cypress run'.
+          # Cypress will use its baseUrl from cypress.config.ts unless overridden by CYPRESS_BASE_URL.
+          # The ci:cy script specifies http://localhost:4173 for start-server-and-test,
+          # so Cypress should target this. If cypress.config.ts baseUrl is different and not overridden,
+          # tests might target the wrong URL. It's safer to explicitly set CYPRESS_BASE_URL for CI.
+          CYPRESS_BASE_URL: http://localhost:4173
