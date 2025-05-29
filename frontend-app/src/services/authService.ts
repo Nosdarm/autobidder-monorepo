@@ -38,9 +38,10 @@ export interface AuthResponse {
 }
 
 export interface RegisterUserInfo {
-  name: string;
+  name: string; // This comes from the form's 'username' field
   email: string;
   password: string;
+  account_type: 'individual' | 'agency';
 }
 
 // 3. AuthService Functions
@@ -68,17 +69,22 @@ export const authService = {
   },
 
   register: async (userInfo: RegisterUserInfo): Promise<User> => {
-    console.log('authService.register called with userInfo:', userInfo); // New log
+    console.log('authService.register called with userInfo:', userInfo);
     try {
-      // Assuming the backend /users/ endpoint is for registration
-      // Adjust if there's a specific /auth/register endpoint
-        const { name, ...payload } = userInfo; // Destructure to exclude name from payload
-        console.log('Sending payload to /auth/register:', payload); // New log
-        const response = await apiClient.post<User>('/auth/register', payload); 
-        console.log('Received response from /auth/register:', response.data); // New log
+      // The backend expects 'username', 'email', 'password', 'account_type'.
+      // The userInfo.name field in this service function receives data from the form's 'username' field.
+      const payload = {
+        username: userInfo.name, // Map service's userInfo.name to backend's username
+        email: userInfo.email,
+        password: userInfo.password,
+        account_type: userInfo.account_type,
+      };
+      console.log('Sending payload to /auth/register:', payload);
+      const response = await apiClient.post<User>('/auth/register', payload);
+      console.log('Received response from /auth/register:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('Error during registration:', error.response || error.message || error); // New log
+      console.error('Error during registration:', error.response || error.message || error);
       const errorMessage = error.response?.data?.detail || error.message || 'Registration failed';
       throw new Error(errorMessage);
     }

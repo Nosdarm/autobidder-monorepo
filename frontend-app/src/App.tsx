@@ -18,6 +18,7 @@ import ProfilesPage from './pages/ProfilesPage'; // Added import
 import BidHistoryPage from './pages/BidHistoryPage'; // Import BidHistoryPage
 import BidDetailPage from './pages/BidDetailPage'; // Import BidDetailPage
 import MLAnalyticsPage from './pages/MLAnalyticsPage'; // Import MLAnalyticsPage
+import AIPromptsPage from './pages/AIPromptsPage'; // Add this import
 
 // Import the main layout component
 import MainLayout from './components/layout/MainLayout'; // Updated import
@@ -96,11 +97,8 @@ function AppRoutes() {
           <Route path="/bids" element={<BidHistoryPage />} /> {/* Add /bids route */}
           <Route path="/bids/:id" element={<BidDetailPage />} /> {/* Add /bids/:id route */}
           <Route path="/ml/metrics" element={<MLAnalyticsPage />} /> {/* Add /ml/metrics route */}
-          {/* TODO: The 'AI Prompts' page (/prompts) is not yet implemented. */}
-          {/* The following route definition is a placeholder and currently commented out. */}
-          {/* Any direct navigation or links to '/prompts' will be caught by the wildcard */}
-          {/* fallback route and redirect to the homepage. */}
-          {/* Example: <Route path="/prompts" element={<AIPromptsPage />} /> */}
+          {/* AI Prompts page - Placeholder currently active. */}
+          <Route path="/prompts" element={<AIPromptsPage />} />
         </Route>
       </Route>
 

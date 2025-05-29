@@ -10,9 +10,17 @@ import authService from '@/services/authService';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Import Select components
 // Label is not directly used, FormLabel from ui/form is used.
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+
+// Translation Keys:
+// auth.validation.accountTypeRequired: "Account type is required."
+// auth.register.accountTypeLabel: "Account Type"
+// auth.register.accountTypeIndividual: "Individual"
+// auth.register.accountTypeAgency: "Agency"
+// auth.register.accountTypePlaceholder: "Select account type"
 
 // Function to create schema with translated messages
 const createRegisterSchema = (t: (key: string, params?: object) => string) => z.object({
@@ -27,6 +35,9 @@ const createRegisterSchema = (t: (key: string, params?: object) => string) => z.
     .min(6, { message: t('auth.validation.passwordMinLength', { min: 6 }) }),
   confirmPassword: z.string()
     .nonempty({ message: t('auth.validation.confirmPasswordRequired') }),
+  account_type: z.enum(['individual', 'agency'], {
+    required_error: t('auth.validation.accountTypeRequired'),
+  }),
 }).refine(data => data.password === data.confirmPassword, {
   message: t('auth.validation.passwordsDoNotMatch'),
   path: ["confirmPassword"],
@@ -47,6 +58,7 @@ export default function RegisterPage() {
       email: '',
       password: '',
       confirmPassword: '',
+      account_type: undefined, // Default to undefined to show placeholder
     },
   });
 
@@ -61,6 +73,7 @@ export default function RegisterPage() {
         name: data.username,
         email: data.email,
         password: data.password,
+        account_type: data.account_type,
       });
       showToastSuccess(t('auth.register.registrationSuccess'));
       navigate('/login');
@@ -127,6 +140,27 @@ export default function RegisterPage() {
                   <FormControl>
                     <Input type="password" placeholder={t('auth.register.confirmPasswordPlaceholder')} {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="account_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('auth.register.accountTypeLabel')}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('auth.register.accountTypePlaceholder')} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="individual">{t('auth.register.accountTypeIndividual')}</SelectItem>
+                      <SelectItem value="agency">{t('auth.register.accountTypeAgency')}</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
