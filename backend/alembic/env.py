@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from app.database import Base
+from app.db.base import Base
 from app import models  
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
@@ -18,7 +18,9 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
-    url = config.get_main_option("sqlalchemy.url")
+    url = os.getenv('DATABASE_URL_ALEMBIC')
+    if not url:
+        url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -30,8 +32,13 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    section = config.get_section(config.config_ini_section, {})
+    db_url_from_env = os.getenv('DATABASE_URL_ALEMBIC')
+    if db_url_from_env:
+        section['sqlalchemy.url'] = db_url_from_env
+    
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        section,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
