@@ -173,6 +173,67 @@ export default function ProfilesPage() {
     );
   }
   
+  // Prepare profile rows for the table
+  const profileRows = profiles && profiles.length > 0
+    ? profiles.map((profile) => {
+        let formattedDate = 'N/A'; // Default or placeholder string
+        if (profile.createdAt) {
+          try {
+            const dateObj = new Date(profile.createdAt);
+            if (!isNaN(dateObj.getTime())) { // Check if date is valid
+              formattedDate = format(dateObj, 'PPpp');
+            } else {
+              console.warn(`Invalid date format for profile ID ${profile.id}: ${profile.createdAt}`);
+            }
+          } catch (error) {
+            console.error(`Error formatting date for profile ID ${profile.id}:`, error);
+          }
+        }
+        return (
+          <TableRow key={profile.id}>
+            <TableCell className="font-medium">{profile.name}</TableCell>
+            <TableCell>
+              <Badge variant={profile.type === 'agency' ? 'secondary' : 'outline'}>
+                {profile.type.charAt(0).toUpperCase() + profile.type.slice(1)}
+              </Badge>
+            </TableCell>
+            <TableCell>
+              <Badge variant={profile.autobidEnabled ? 'default' : 'destructive'}
+                     className={profile.autobidEnabled ? 'bg-green-500 hover:bg-green-600' : ''}>
+                {profile.autobidEnabled ? t('common.enabled') : t('common.disabled')}
+              </Badge>
+            </TableCell>
+            <TableCell>{formattedDate}</TableCell>
+            <TableCell className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">{t('profilesPage.actions.openMenuFor', { profileName: profile.name })}</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => handleOpenEditModal(profile)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    {t('profilesPage.actions.editProfile')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleOpenDeleteAlert(profile)} className="text-red-600 hover:!text-red-600 focus:text-red-600">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {t('profilesPage.actions.deleteProfile')}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem disabled>
+                    {t('common.viewAutobidLogs')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TableCell>
+          </TableRow>
+        );
+      })
+    : null;
+
   return (
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -239,66 +300,7 @@ export default function ProfilesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {profiles && profiles.length > 0 ? (
-              profiles.map((profile) => {
-                let formattedDate = 'N/A'; // Default or placeholder string
-                if (profile.createdAt) {
-                  try {
-                    const dateObj = new Date(profile.createdAt);
-                    if (!isNaN(dateObj.getTime())) { // Check if date is valid
-                      formattedDate = format(dateObj, 'PPpp');
-                    } else {
-                      // Optional: Log a warning for invalid date strings if helpful for debugging
-                      console.warn(`Invalid date format for profile ID ${profile.id}: ${profile.createdAt}`);
-                    }
-                  } catch (error) {
-                    // Optional: Log an error if new Date() or format() itself throws for some reason
-                    console.error(`Error formatting date for profile ID ${profile.id}:`, error);
-                  }
-                }
-                return (
-                  <TableRow key={profile.id}>
-                    <TableCell className="font-medium">{profile.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={profile.type === 'agency' ? 'secondary' : 'outline'}>
-                        {profile.type.charAt(0).toUpperCase() + profile.type.slice(1)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={profile.autobidEnabled ? 'default' : 'destructive'}
-                             className={profile.autobidEnabled ? 'bg-green-500 hover:bg-green-600' : ''}>
-                        {profile.autobidEnabled ? t('common.enabled') : t('common.disabled')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formattedDate}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">{t('profilesPage.actions.openMenuFor', { profileName: profile.name })}</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleOpenEditModal(profile)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          {t('profilesPage.actions.editProfile')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleOpenDeleteAlert(profile)} className="text-red-600 hover:!text-red-600 focus:text-red-600">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          {t('profilesPage.actions.deleteProfile')}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem disabled> 
-                          {t('common.viewAutobidLogs')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
+            {profileRows ? profileRows : (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
                   {t('profilesPage.noProfilesFound')}
