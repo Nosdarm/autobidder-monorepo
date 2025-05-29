@@ -6,6 +6,7 @@ import { Toaster } from 'react-hot-toast'; // Import Toaster
 
 // Auth Pages
 import LoginPage from './pages/auth/LoginPage';
+import { Loader2 } from 'lucide-react'; // Import Loader2
 import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import VerifyEmailPage from './pages/auth/VerifyEmailPage';
@@ -41,7 +42,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div>Loading authentication status...</div>; // Or a spinner component
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
@@ -55,8 +60,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = () => {
 function AppRoutes() {
   const { isLoading } = useAuth(); // Access isLoading to prevent premature rendering
 
+  // This specific "Loading application..." might be redundant if ProtectedRoute already handles it,
+  // but if there are routes accessible *before* ProtectedRoute kicks in (e.g. public routes that
+  // still wait for auth resolution for some reason), this can be a global loader.
+  // For now, we'll apply the same spinner. If distinct behavior is needed, it can be adjusted.
   if (isLoading) {
-    return <div>Loading application...</div>; // Or a global app spinner
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (

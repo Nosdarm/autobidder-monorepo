@@ -22,9 +22,21 @@ const createProfileFormSchema = (t: (key: string) => string) => z.object({
     required_error: t('profileForm.validation.typeRequired'),
   }),
   autobidEnabled: z.boolean().default(false),
+  skills: z.array(z.string()).optional(),
+  experience_level: z.string().optional(),
 });
 
 export type ProfileFormValues = z.infer<ReturnType<typeof createProfileFormSchema>>;
+
+// Internationalization keys:
+// profileForm.skillsLabel: "Skills"
+// profileForm.skillsPlaceholder: "e.g., React, Node.js, Python"
+// profileForm.skillsDescription: "Enter skills separated by commas."
+// profileForm.experienceLevelLabel: "Experience Level"
+// profileForm.experienceLevelPlaceholder: "Select experience level"
+// profileForm.experienceEntryLevel: "Entry-level"
+// profileForm.experienceIntermediate: "Intermediate"
+// profileForm.experienceExpert: "Expert"
 
 interface ProfileCreateFormProps {
   onSave: (data: ProfileFormValues) => Promise<void>;
@@ -42,8 +54,10 @@ export default function ProfileCreateForm({ onSave, onCancel, isSaving, initialD
     defaultValues: initialData || {
       id: undefined,
       name: '',
-      type: undefined, 
+      type: undefined,
       autobidEnabled: false,
+      skills: [],
+      experience_level: undefined,
     },
   });
 
@@ -58,6 +72,8 @@ export default function ProfileCreateForm({ onSave, onCancel, isSaving, initialD
         name: '',
         type: undefined,
         autobidEnabled: false,
+        skills: [],
+        experience_level: undefined,
       });
     }
   }, [initialData, reset]);
@@ -80,6 +96,54 @@ export default function ProfileCreateForm({ onSave, onCancel, isSaving, initialD
               </FormControl>
               <FormDescription>
                 {t('profileForm.nameDescription')}
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="skills"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('profileForm.skillsLabel', 'Skills')}</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder={t('profileForm.skillsPlaceholder', 'e.g., React, Node.js, Python')} 
+                  {...field} 
+                  value={Array.isArray(field.value) ? field.value.join(', ') : ''}
+                  onChange={(e) => field.onChange(e.target.value.split(',').map(skill => skill.trim()).filter(skill => skill))}
+                />
+              </FormControl>
+              <FormDescription>
+                {t('profileForm.skillsDescription', 'Enter skills separated by commas.')}
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="experience_level"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('profileForm.experienceLevelLabel', 'Experience Level')}</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('profileForm.experienceLevelPlaceholder', 'Select experience level')} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="entry">{t('profileForm.experienceEntryLevel', 'Entry-level')}</SelectItem>
+                  <SelectItem value="intermediate">{t('profileForm.experienceIntermediate', 'Intermediate')}</SelectItem>
+                  <SelectItem value="expert">{t('profileForm.experienceExpert', 'Expert')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                {/* Add description if needed */}
               </FormDescription>
               <FormMessage />
             </FormItem>

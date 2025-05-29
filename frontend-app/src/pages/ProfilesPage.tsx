@@ -107,13 +107,15 @@ export default function ProfilesPage() {
     }
   };
 
-  const currentModalProfileData = profileToEdit 
-    ? { 
-        id: profileToEdit.id, 
-        name: profileToEdit.name, 
-        type: profileToEdit.type, 
-        autobidEnabled: profileToEdit.autobidEnabled 
-      } 
+  const currentModalProfileData = profileToEdit
+    ? {
+        id: profileToEdit.id,
+        name: profileToEdit.name,
+        type: profileToEdit.profile_type, // Mapped from profile_type
+        autobidEnabled: profileToEdit.autobid_enabled, // Mapped from autobid_enabled
+        skills: profileToEdit.skills || [], // Pass skills, default to empty array
+        experience_level: profileToEdit.experience_level || undefined // Pass experience_level, default to undefined
+      }
     : undefined;
 
   const modalOpenState = isCreateModalOpen || isEditModalOpen;
