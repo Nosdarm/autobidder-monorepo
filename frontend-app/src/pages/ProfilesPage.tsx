@@ -193,8 +193,10 @@ export default function ProfilesPage() {
           <TableRow key={profile.id}>
             <TableCell className="font-medium">{profile.name}</TableCell>
             <TableCell>
-              <Badge variant={profile.type === 'agency' ? 'secondary' : 'outline'}>
-                {profile.type.charAt(0).toUpperCase() + profile.type.slice(1)}
+              <Badge variant={profile.profile_type === 'agency' ? 'secondary' : 'outline'}>
+                {profile.profile_type && typeof profile.profile_type === 'string' && profile.profile_type.length > 0
+                  ? profile.profile_type.charAt(0).toUpperCase() + profile.profile_type.slice(1)
+                  : 'N/A'}
               </Badge>
             </TableCell>
             <TableCell>
