@@ -1,6 +1,12 @@
-from sqlalchemy import Column, String, Boolean, Integer
+import enum
+from sqlalchemy import Column, String, Boolean, Integer, Enum
 from sqlalchemy.orm import relationship
 from app.database import Base
+
+
+class AccountType(enum.Enum):
+    INDIVIDUAL = "individual"
+    AGENCY = "agency"
 
 
 class User(Base):
@@ -11,6 +17,7 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     role = Column(String, default="user")
     is_verified = Column(Boolean, default=False)
+    account_type = Column(Enum(AccountType), nullable=False, default=AccountType.INDIVIDUAL)
 
     profiles = relationship(
         "Profile",

@@ -1,4 +1,9 @@
-from .agency import AgencyProfileCreate
+from .agency import (
+    AgencyProfileCreate,
+    AgencyMemberInviteSchema,
+    AgencyMemberRoleUpdateSchema,
+    AgencyMemberResponseSchema,
+)
 from .ai_prompt import (
     AIPromptBase,
     AIPromptCreate,
@@ -90,4 +95,8 @@ __all__ = [
     "TokenResponse",
     "RoleUpdateInput",
     "UserRoleUpdateResponse",
+    # AgencyMember schemas
+    "AgencyMemberInviteSchema",
+    "AgencyMemberRoleUpdateSchema",
+    "AgencyMemberResponseSchema",
 ]

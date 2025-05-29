@@ -24,6 +24,7 @@ from app.routers.autobidder.logs                  import router as autobid_logs_
 from app.routers.ai.prompts                       import router as ai_prompts_router
 from app.routers.jobs_routes                      import router as jobs_router # Added jobs_router
 from app.routers import websockets as ws_router # Import WebSocket router
+from app.routers.agency_routes                import router as agency_management_router # Import new agency management router
 
 app = FastAPI(debug=settings.APP_DEBUG) # Use settings
 
@@ -71,6 +72,7 @@ app.include_router(autobid_logs_router,     prefix="/autobidder/logs", tags=["Au
 app.include_router(ai_prompts_router,       prefix="/ai",              tags=["AI Prompts"])
 app.include_router(jobs_router,             prefix="/jobs",            tags=["Jobs"]) # Added jobs_router
 app.include_router(ws_router.router,        prefix="/ws",              tags=["WebSockets"]) # Include WebSocket router
+app.include_router(agency_management_router, prefix="/agency",         tags=["Agency Management"]) # Include new router
 
 # Лог всех маршрутов
 def _log_routes():

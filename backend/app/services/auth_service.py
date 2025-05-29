@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user import User
+from app.models.user import User, AccountType # Import AccountType
 from app.schemas.auth import RegisterInput, LoginInput
 from app.schemas.user import UserOut # Added import
 from app.utils.auth import (
@@ -23,7 +23,16 @@ async def register_user_service(data: RegisterInput, db: AsyncSession):
         raise HTTPException(status_code=400, detail="Email already registered")
 
     hashed_password = get_password_hash(data.password)
-    user = User(email=data.email, hashed_password=hashed_password)
+    user_data = {
+        "email": data.email,
+        "hashed_password": hashed_password,
+        "account_type": data.account_type
+    }
+    if data.account_type == AccountType.AGENCY:
+        user_data["role"] = "super_admin"
+    # If not AGENCY, the role will use the default "user" from the User model
+
+    user = User(**user_data)
     db.add(user)
     await db.commit()
     await db.refresh(user)
@@ -56,7 +65,12 @@ async def login_user_service(data: LoginInput, db: AsyncSession):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     print(f"Login successful for email: {data.email}")
-    token = create_access_token({"sub": user.email})  # 👈 обязательно sub!
+    token_data = {
+        "sub": user.email,
+        "role": user.role,
+        "account_type": user.account_type.value  # Use .value for Enum serialization
+    }
+    token = create_access_token(token_data)
     
     # Explicitly create UserOut instance from the ORM user model
     # Assuming Pydantic v2+ usage with model_validate.
@@ -68,7 +82,9 @@ async def login_user_service(data: LoginInput, db: AsyncSession):
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user": user_out_instance # Pass the Pydantic model instance
+        "user": user_out_instance, # Pass the Pydantic model instance
+        "role": user.role,  # Add role to the response
+        "account_type": user.account_type  # Add account_type to the response (Pydantic handles Enum)
     }
 
 

@@ -27,4 +27,7 @@ __all__ = [
     "BidOutcome",
     "ProfileHistoricalStats",
     "Prompt", # Added Prompt
+    "AgencyMember", # Added AgencyMember
+    "AgencyRole",   # Added AgencyRole
 ]
+from .agency import AgencyMember, AgencyRole # Ensure new models are imported

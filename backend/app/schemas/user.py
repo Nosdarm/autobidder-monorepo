@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
+from app.models.user import AccountType
 
 # Schema for user data from file-based store (user_api.py)
 
@@ -23,8 +24,9 @@ class UserOut(BaseModel):  # This is for ORM based user models.
     email: EmailStr
     # profile_id: int # This field might be specific to an ORM context with a
     # direct profile link
-    role: Optional[str] = None  # Assuming role might exist in ORM User model
-    is_verified: Optional[bool] = None  # Assuming is_verified might exist
+    role: str  # Role will always be present due to default in model
+    is_verified: bool  # is_verified will always be present due to default in model
+    account_type: AccountType  # Added account_type
 
     model_config = {
         "from_attributes": True  # For ORM to Pydantic conversion
@@ -40,6 +42,9 @@ class TokenResponse(BaseModel):
     access_token: str = Field(..., description="JWT токен")
     token_type: str = Field(..., description="Тип токена, обычно 'bearer'")
     user: UserOut = Field(..., description="Информация о пользователе")
+    # Explicitly adding role and account_type to the top level of the response
+    role: str = Field(..., description="Роль пользователя")
+    account_type: AccountType = Field(..., description="Тип аккаунта пользователя")
 
 # Schema for RoleUpdateInput in user_roles_routes.py
 
