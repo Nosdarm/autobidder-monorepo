@@ -43,7 +43,7 @@ def upgrade() -> None:
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('profile_type', sa.String(), nullable=False),
-    sa.Column('user_id', sa.String(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('autobid_enabled', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
