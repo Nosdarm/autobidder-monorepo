@@ -230,9 +230,9 @@ export default function ProfilesPage() {
               </Badge>
             </TableCell>
             <TableCell>
-              <Badge variant={profile.autobidEnabled ? 'default' : 'destructive'}
-                     className={profile.autobidEnabled ? 'bg-green-500 hover:bg-green-600' : ''}>
-                {profile.autobidEnabled ? t('common.enabled') : t('common.disabled')}
+              <Badge variant={profile.autobid_enabled ? 'default' : 'destructive'}
+                     className={profile.autobid_enabled ? 'bg-green-500 hover:bg-green-600' : ''}>
+                {profile.autobid_enabled ? t('common.enabled') : t('common.disabled')}
               </Badge>
             </TableCell>
             <TableCell>{formattedDate}</TableCell>
