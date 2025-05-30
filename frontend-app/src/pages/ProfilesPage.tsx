@@ -42,17 +42,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import ProfileCreateForm, { ProfileFormValues } from '@/components/profiles/ProfileCreateForm';
-import { 
-  useProfiles, 
-  useCreateProfile, 
-  useUpdateProfile, 
-  useDeleteProfile 
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
+import {
+  useProfiles,
+  useCreateProfile,
+  useUpdateProfile,
+  useDeleteProfile
 } from '@/hooks/useProfileQueries';
 import type { Profile } from '@/services/profileService';
 
 
 export default function ProfilesPage() {
   const { t } = useTranslation();
+  const { user } = useAuth(); // Get user from AuthContext
+  const accountType = user?.account_type || 'individual'; // Default to individual
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [profileToEdit, setProfileToEdit] = useState<Profile | null>(null);
@@ -173,9 +177,18 @@ export default function ProfilesPage() {
     );
   }
   
+  
+  // TODO: Future filtering logic based on accountType can be added here.
+  // For example:
+  // const displayedProfiles = accountType === 'individual' 
+  //   ? profiles.filter(p => p.user_id === user?.id) // Assuming profiles have user_id
+  //   : profiles;
+  // For now, we display all profiles for both account types.
+  const displayedProfiles = profiles;
+
   // Prepare profile rows for the table
-  const profileRows = profiles && profiles.length > 0
-    ? profiles.map((profile) => {
+  const profileRows = displayedProfiles && displayedProfiles.length > 0
+    ? displayedProfiles.map((profile) => {
         let formattedDate = 'N/A'; // Default or placeholder string
         if (profile.createdAt) {
           try {
@@ -245,8 +258,11 @@ export default function ProfilesPage() {
               {t('profilesPage.description')}
           </p>
         </div>
-        <Button onClick={handleOpenCreateModal}>
-            <PlusCircle className="mr-2 h-4 w-4" /> {t('profilesPage.createProfileButton')}
+        <Button onClick={handleOpenCreateModal} data-cy="profiles-page-create-button">
+            <PlusCircle className="mr-2 h-4 w-4" /> 
+            {accountType === 'agency' 
+              ? t('profilesPage.createProfileButtonAgency') 
+              : t('profilesPage.createProfileButton')}
         </Button>
       </div>
 
@@ -257,6 +273,7 @@ export default function ProfilesPage() {
             <DialogDescription>{modalDescription}</DialogDescription>
           </DialogHeader>
           <ProfileCreateForm
+            userAccountType={accountType} // Pass user's account type
             onSave={handleSaveProfile}
             onCancel={() => setModalOpenState(false)}
             isSaving={createProfileMutation.isPending || updateProfileMutation.isPending}

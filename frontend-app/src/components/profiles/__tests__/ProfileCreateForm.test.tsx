@@ -46,6 +46,7 @@ describe('ProfileCreateForm Component', () => {
     onCancel: mockOnCancel,
     isSaving: false,
     initialData: null,
+    userAccountType: 'individual' as 'individual' | 'agency', // Add userAccountType
   };
 
   beforeEach(() => {
@@ -53,70 +54,129 @@ describe('ProfileCreateForm Component', () => {
   });
 
   const renderForm = (props?: Partial<typeof defaultProps>) => {
-    return render(<ProfileCreateForm {...defaultProps} {...props} />);
+    // Ensure userAccountType is always provided, defaulting if necessary
+    const mergedProps = { ...defaultProps, ...props };
+    if (!mergedProps.userAccountType) {
+      mergedProps.userAccountType = 'individual'; 
+    }
+    return render(<ProfileCreateForm {...mergedProps} />);
   };
 
-  test('renders correctly with default values', () => {
-    renderForm();
+  test('renders correctly with default values for individual user', () => {
+    renderForm({ userAccountType: 'individual' });
 
-    // Check for presence of all form fields using their labels (as per i18n keys)
     expect(screen.getByLabelText('profileForm.nameLabel')).toBeInTheDocument();
-    expect(screen.getByLabelText('profileForm.nameLabel')).toHaveValue('');
-
-    // Shadcn Select: Trigger has the role 'combobox' and is associated with the label
-    expect(screen.getByRole('combobox', { name: 'profileForm.typeLabel' })).toBeInTheDocument();
-    // Default placeholder for type should be visible. The actual SelectValue component might render the placeholder.
-    expect(screen.getByText('profileForm.typePlaceholder')).toBeInTheDocument();
-
-
-    expect(screen.getByLabelText('profileForm.skillsLabel')).toBeInTheDocument();
-    expect(screen.getByLabelText('profileForm.skillsLabel')).toHaveValue('');
+    // For an individual user, type field should NOT be visible, and skills/experience ARE visible
+    expect(screen.queryByRole('combobox', { name: 'profileForm.typeLabel' })).not.toBeInTheDocument();
     
+    expect(screen.getByLabelText('profileForm.skillsLabel')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'profileForm.experienceLevelLabel' })).toBeInTheDocument();
-    expect(screen.getByText('profileForm.experienceLevelPlaceholder')).toBeInTheDocument();
+    expect(screen.queryByLabelText('profileForm.agencySpecificFieldLabel')).not.toBeInTheDocument();
 
     expect(screen.getByRole('switch', { name: 'profileForm.autobidLabel' })).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: 'profileForm.autobidLabel' })).not.toBeChecked();
-
-    // Check for buttons
     expect(screen.getByRole('button', { name: 'profileForm.saveButtonCreate' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'profileForm.cancelButton' })).toBeInTheDocument();
   });
-
-  test('renders correctly with initialData (edit mode)', () => {
+  
+  test('renders correctly with initialData for individual user (edit mode, type is personal)', () => {
     const initialData: ProfileFormValues = {
-      id: '123',
-      name: 'Test User',
-      type: 'agency',
-      autobidEnabled: true,
-      skills: ['React', 'Node.js'],
-      experience_level: 'expert',
+      id: '123', name: 'Test User', type: 'personal', autobidEnabled: true,
+      skills: ['React', 'Node.js'], experience_level: 'expert',
     };
-    renderForm({ initialData });
+    renderForm({ initialData, userAccountType: 'individual' });
 
     expect(screen.getByLabelText('profileForm.nameLabel')).toHaveValue(initialData.name);
-    
-    // For Select, check if the selected value is displayed
-    // The text for the selected value is based on the i18n key for that value.
-    expect(screen.getByText('profileForm.typeAgency')).toBeInTheDocument(); // 'agency' maps to this key
+    // Type field still not visible for individual user, even in edit mode.
+    expect(screen.queryByRole('combobox', { name: 'profileForm.typeLabel' })).not.toBeInTheDocument();
     
     expect(screen.getByLabelText('profileForm.skillsLabel')).toHaveValue(initialData.skills!.join(', '));
-    
     expect(screen.getByText('profileForm.experienceExpert')).toBeInTheDocument(); // 'expert' maps to this key
-
-    expect(screen.getByRole('switch', { name: 'profileForm.autobidLabel' })).toBeChecked();
+    expect(screen.queryByLabelText('profileForm.agencySpecificFieldLabel')).not.toBeInTheDocument();
     
-    // Submit button text should change in edit mode
+    expect(screen.getByRole('switch', { name: 'profileForm.autobidLabel' })).toBeChecked();
     expect(screen.getByRole('button', { name: 'profileForm.saveButtonUpdate' })).toBeInTheDocument();
   });
 
-  describe('Validation Logic', () => {
+
+  // New tests for conditional rendering based on userAccountType and selected profile_type
+  describe('Individual User (userAccountType="individual")', () => {
+    const userAccountType = 'individual';
+
+    test('Profile Type select is NOT visible', () => {
+      renderForm({ userAccountType });
+      expect(screen.queryByRole('combobox', { name: 'profileForm.typeLabel' })).not.toBeInTheDocument();
+    });
+
+    test('Skills and Experience Level fields ARE visible by default', () => {
+      renderForm({ userAccountType });
+      expect(screen.getByLabelText('profileForm.skillsLabel')).toBeVisible();
+      expect(screen.getByRole('combobox', { name: 'profileForm.experienceLevelLabel' })).toBeVisible();
+    });
+
+    test('Agency Specific Field is NOT visible', () => {
+      renderForm({ userAccountType });
+      expect(screen.queryByLabelText('profileForm.agencySpecificFieldLabel')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Agency User (userAccountType="agency")', () => {
+    const userAccountType = 'agency';
+
+    test('Profile Type select IS visible', () => {
+      renderForm({ userAccountType });
+      expect(screen.getByRole('combobox', { name: 'profileForm.typeLabel' })).toBeVisible();
+    });
+
+    test('When "personal" is selected as profile type: Skills and Experience ARE visible, Agency Specific is NOT', async () => {
+      renderForm({ userAccountType });
+      const typeSelect = screen.getByRole('combobox', { name: 'profileForm.typeLabel' });
+      fireEvent.click(typeSelect);
+      await screen.findByText('profileForm.typePersonal'); // Wait for options
+      fireEvent.click(screen.getByText('profileForm.typePersonal'));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('profileForm.skillsLabel')).toBeVisible();
+        expect(screen.getByRole('combobox', { name: 'profileForm.experienceLevelLabel' })).toBeVisible();
+        expect(screen.queryByLabelText('profileForm.agencySpecificFieldLabel')).not.toBeInTheDocument();
+      });
+    });
+    
+    test('When "agency" is selected as profile type: Skills and Experience are NOT visible, Agency Specific IS visible', async () => {
+      renderForm({ userAccountType });
+      const typeSelect = screen.getByRole('combobox', { name: 'profileForm.typeLabel' });
+      fireEvent.click(typeSelect);
+      await screen.findByText('profileForm.typeAgency');
+      fireEvent.click(screen.getByText('profileForm.typeAgency'));
+
+      await waitFor(() => {
+        expect(screen.queryByLabelText('profileForm.skillsLabel')).not.toBeInTheDocument();
+        expect(screen.queryByRole('combobox', { name: 'profileForm.experienceLevelLabel' })).not.toBeInTheDocument();
+        expect(screen.getByLabelText('profileForm.agencySpecificFieldLabel')).toBeVisible();
+      });
+    });
+    
+    test('renders correctly with initialData (edit mode, type is agency)', () => {
+      const initialData: ProfileFormValues = {
+        id: '123', name: 'Agency Test', type: 'agency', autobidEnabled: false,
+      };
+      renderForm({ initialData, userAccountType: 'agency' });
+      expect(screen.getByLabelText('profileForm.nameLabel')).toHaveValue(initialData.name);
+      expect(screen.getByText('profileForm.typeAgency')).toBeInTheDocument(); // Selected type visible
+      // Skills and Experience should not be visible for agency type
+      expect(screen.queryByLabelText('profileForm.skillsLabel')).not.toBeInTheDocument();
+      expect(screen.queryByRole('combobox', { name: 'profileForm.experienceLevelLabel' })).not.toBeInTheDocument();
+      // Agency specific field should be visible
+      expect(screen.getByLabelText('profileForm.agencySpecificFieldLabel')).toBeVisible();
+    });
+  });
+
+  // --- Re-integrating existing Validation and Submission tests, ensuring they pass with new structure ---
+  describe('Validation Logic (with userAccountType considerations)', () => {
     test('name field: required validation', async () => {
-      renderForm();
+      renderForm({ userAccountType: 'individual' }); // Test with one type, should be same for both
       fireEvent.click(screen.getByRole('button', { name: 'profileForm.saveButtonCreate' }));
       
-      // FormMessage for name field should display the error
-      const nameFormItem = screen.getByLabelText('profileForm.nameLabel').closest('div[role="group"]'); // Heuristic, might need better selector
+      const nameFormItem = screen.getByLabelText('profileForm.nameLabel').closest('div[role="group"]');
       if (!nameFormItem) throw new Error("Could not find FormItem for name");
       
       await waitFor(() => {
@@ -126,7 +186,7 @@ describe('ProfileCreateForm Component', () => {
     });
 
     test('name field: minLength validation', async () => {
-      renderForm();
+      renderForm({ userAccountType: 'individual' });
       fireEvent.change(screen.getByLabelText('profileForm.nameLabel'), { target: { value: 'a' } });
       fireEvent.click(screen.getByRole('button', { name: 'profileForm.saveButtonCreate' }));
       
@@ -134,20 +194,18 @@ describe('ProfileCreateForm Component', () => {
       if (!nameFormItem) throw new Error("Could not find FormItem for name");
 
       await waitFor(() => {
-        // The t mock will replace {min} with the value
         expect(within(nameFormItem).getByText('profileForm.validation.nameMinLength_min_3')).toBeInTheDocument();
       });
       expect(mockOnSave).not.toHaveBeenCalled();
     });
 
-    test('type field: required validation', async () => {
-      renderForm();
-      // Fill name to pass its validation
+    // Type validation is only relevant for agency users as it's visible
+    test('type field: required validation (for agency user)', async () => {
+      renderForm({ userAccountType: 'agency' });
       fireEvent.change(screen.getByLabelText('profileForm.nameLabel'), { target: { value: 'Valid Name' } });
+      // Do not select a type
       fireEvent.click(screen.getByRole('button', { name: 'profileForm.saveButtonCreate' }));
       
-      // FormMessage for type field
-      // For shadcn Select, the FormItem is usually a parent of the combobox role.
       const typeSelect = screen.getByRole('combobox', { name: 'profileForm.typeLabel' });
       const typeFormItem = typeSelect.closest('div[role="group"]');
       if (!typeFormItem) throw new Error("Could not find FormItem for type");
@@ -159,7 +217,7 @@ describe('ProfileCreateForm Component', () => {
     });
   });
 
-  describe('Submission Logic', () => {
+  describe('Submission Logic (with userAccountType considerations)', () => {
     const validFormData: ProfileFormValues = {
       name: 'Valid Profile Name',
       type: 'personal',

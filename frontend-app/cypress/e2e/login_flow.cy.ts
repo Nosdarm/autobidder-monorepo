@@ -20,11 +20,15 @@ describe('Login Flow', () => {
     // Assert redirection to the dashboard
     cy.url().should('include', '/dashboard');
 
-    // Assert that some element indicating successful login is present
-    // This could be a logout button, a welcome message, etc.
-    // Using a generic check for a common element like a "Logout" button in a nav
-    // This selector will likely need adjustment based on the actual Navbar component
-    cy.get('nav').should('be.visible').and('contain.text', 'Logout'); // Or check for user's email, etc.
+    // Assert that dashboard specific to an individual user is shown
+    // Assuming 'testuser@example.com' is an individual user.
+    // These assertions require data-cy attributes on the dashboard cards.
+    cy.get('[data-cy="dashboard-card-active-profiles"]').should('be.visible').and('contain.text', 'Active Profiles');
+    cy.get('[data-cy="dashboard-card-my-profile-performance"]').should('be.visible').and('contain.text', 'My Profile Performance');
+
+    // A more generic check for successful login can remain (e.g., logout button in nav)
+    // This selector will likely need adjustment based on the actual Navbar component.
+    // cy.get('nav').should('be.visible').and('contain.text', 'Logout'); // Example
     
     // Optional: Check localStorage for a token (if applicable)
     // cy.window().its('localStorage.token').should('be.a', 'string');

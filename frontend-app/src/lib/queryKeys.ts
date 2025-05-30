@@ -43,4 +43,6 @@ export const mlAnalyticsKeys = {
 export const dashboardKeys = {
   all: ['dashboard'] as const,
   summaryStats: () => [...dashboardKeys.all, 'summaryStats'] as const,
+  individualStats: () => [...dashboardKeys.all, 'individualStats'] as const,
+  agencyStats: () => [...dashboardKeys.all, 'agencyStats'] as const,
 };

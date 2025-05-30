@@ -47,7 +47,7 @@ export default function SideNav() {
             </NavLink>
           </li>
           {user?.account_type === 'agency' && (
-            <li className="mt-1">
+            <li className="mt-1" data-cy="sidenav-link-team">
               <NavLink
                 to="/team"
                 className={({ isActive }) => `${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}

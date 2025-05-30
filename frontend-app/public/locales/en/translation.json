@@ -37,6 +37,29 @@
       "title": "Recent Bids",
       "description": "Bids placed in the last 24 hours",
       "button": "View Bid History"
+    },
+    "individualPerformance": {
+      "title": "My Profile Performance",
+      "description": "Average bid success rate",
+      "loading": "Loading...",
+      "button": "View Details"
+    },
+    "managedProfiles": {
+      "title": "Managed Client Profiles",
+      "description": "Client profiles under your agency",
+      "button": "View Client Profiles"
+    },
+    "teamActivity": {
+      "title": "Team Activity Overview",
+      "members": "{{count}} Team Members",
+      "recentBids": "{{count}} recent team bids",
+      "button": "View Team Insights"
+    },
+    "agencyPerformance": {
+      "title": "Agency Performance Metrics",
+      "description": "Overall client satisfaction",
+      "loading": "Loading...",
+      "button": "View Agency Analytics"
     }
   },
 
@@ -44,6 +67,7 @@
     "title": "Profiles Management",
     "description": "Manage your job bidding profiles.",
     "createProfileButton": "Create Profile",
+    "createProfileButtonAgency": "Add New Profile",
     "createModalTitle": "Create New Profile",
     "createModalDescription": "Fill in the details below to add a new bidding profile.",
     "editModalTitle": "Edit Profile",
@@ -77,6 +101,17 @@
     "typeDescription": "Choose \"personal\" for individual accounts, \"agency\" for teams.",
     "typePersonal": "Personal",
     "typeAgency": "Agency",
+    "skillsLabel": "Skills",
+    "skillsPlaceholder": "e.g., React, Node.js, Python",
+    "skillsDescription": "Enter skills separated by commas.",
+    "experienceLevelLabel": "Experience Level",
+    "experienceLevelPlaceholder": "Select experience level",
+    "experienceEntryLevel": "Entry-level",
+    "experienceIntermediate": "Intermediate",
+    "experienceExpert": "Expert",
+    "agencySpecificFieldLabel": "Agency Specific Field (e.g., Company Name)",
+    "agencySpecificFieldPlaceholder": "Enter company name",
+    "agencySpecificFieldDescription": "This field is specific to agency profiles.",
     "autobidLabel": "Autobid Enabled",
     "autobidDescription": "Allow automatic bidding for jobs matching this profile.",
     "saveButtonCreate": "Save Profile",
@@ -89,56 +124,53 @@
     }
   },
 
-  "aiPrompts": {
-    "title": "AI Prompts Library",
-    "description": "Manage your reusable AI prompts.",
-    "createPrompt": "Create Prompt",
-    "loading": "Loading AI prompts...",
-    "errorLoading": "Error loading prompts: {{errorMessage}}",
+  "aiPromptsPage": {
+    "title": "AI Prompts Management",
+    "description": "Manage your reusable AI prompts for various tasks.",
+    "createButton": "Create New Prompt",
     "table": {
       "caption": "A list of your configured AI prompts.",
       "headerName": "Name",
-      "headerProfile": "Associated Profile",
-      "headerActive": "Active",
+      "headerCategory": "Category",
+      "headerPromptSnippet": "Prompt Snippet",
       "headerCreatedAt": "Created At",
       "headerActions": "Actions",
+      "actionsLabel": "Actions for {{name}}",
       "noPrompts": "No AI prompts found. Get started by creating one!"
     },
-    "drawer": {
-      "editTitle": "Edit AI Prompt",
-      "createTitle": "Create New AI Prompt",
-      "editDescription": "Update the details for this AI prompt.",
-      "createDescription": "Fill in the details below to add a new AI prompt."
+    "createModal": {
+      "title": "Create New AI Prompt",
+      "description": "Fill in the details below to add a new AI prompt."
     },
-    "deleteDialog": {
+    "editModal": {
+      "title": "Edit AI Prompt",
+      "description": "Update the details for this AI prompt."
+    },
+    "form": {
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g., Blog Post Generator",
+      "categoryLabel": "Category",
+      "categoryPlaceholder": "Select a category",
+      "categoryOptions": {
+        "general": "General",
+        "marketing": "Marketing",
+        "technical": "Technical",
+        "translation": "Translation",
+        "contentGeneration": "Content Generation"
+      },
+      "promptTextLabel": "Prompt Text",
+      "promptTextPlaceholder": "Enter the full AI prompt here...",
+      "saveButton": "Save Prompt"
+    },
+    "deleteAlert": {
       "title": "Confirm Deletion",
-      "areYouSure": "Are you sure you want to delete prompt \"{{promptName}}\"? This action cannot be undone.",
-      "confirmDelete": "Confirm Delete",
-      "cancel": "Cancel"
+      "description": "Are you sure you want to delete the prompt \"{{name}}\"? This action cannot be undone."
     },
-    "previewDialog": {
-      "title": "Preview AI Prompt: {{promptName}}",
-      "description": "Enter text below to test the selected prompt. Placeholders like `{{'{PLACEHOLDER_NAME}'}}` in the prompt will be simulated.",
-      "testInputLabel": "Test Input (e.g., Vacancy Description)",
-      "testInputPlaceholder": "Paste relevant text here to test the prompt...",
-      "generatePreview": "Generate Preview",
-      "previewGeneratedSuccess": "Preview generated successfully!",
-      "noPreviewGenerated": "No preview generated.",
-      "generatedOutputLabel": "Generated Output",
-      "close": "Close"
-    },
-    "status": {
-      "activeYes": "Yes",
-      "activeNo": "No",
-      "noProfileAssociated": "N/A",
-      "unknownProfile": "Unknown Profile"
-    },
-    "actions": {
-      "label": "Actions",
-      "edit": "Edit",
-      "preview": "Preview",
-      "delete": "Delete",
-      "openMenuFor": "Open menu for {{promptName}}"
+    "toast": {
+      "saveSuccessTitle": "Prompt Saved",
+      "saveSuccessDescription": "Prompt \"{{name}}\" has been saved successfully.",
+      "deleteSuccessTitle": "Prompt Deletion Initiated",
+      "deleteSuccessDescription": "Prompt \"{{name}}\" will be deleted."
     }
   },
 
@@ -251,6 +283,36 @@
     "enabled": "Enabled",
     "disabled": "Disabled",
     "confirmDeleteButton": "Confirm Delete",
-    "viewAutobidLogs": "View Autobid Logs"
+    "viewAutobidLogs": "View Autobid Logs",
+    "cancel": "Cancel"
+  },
+
+  "teamPage": {
+    "title": "Team Management",
+    "description": "Manage your team members and their roles.",
+    "inviteButton": "Invite New Member",
+    "accessDenied": {
+      "title": "Access Denied",
+      "description": "This page is only accessible to Agency accounts."
+    },
+    "inviteModal": {
+      "title": "Invite New Member",
+      "description": "Enter the email and role for the new team member.",
+      "emailLabel": "Email",
+      "roleLabel": "Role",
+      "rolePlaceholder": "Select a role",
+      "roleMember": "Member",
+      "roleAdmin": "Admin",
+      "sendButton": "Send Invitation",
+      "toastSuccessTitle": "Invitation Sent",
+      "toastSuccessDescription": "Invitation has been sent to {{email}}."
+    },
+    "membersTable": {
+      "caption": "A list of your team members.",
+      "headerName": "Name",
+      "headerEmail": "Email",
+      "headerRole": "Role",
+      "headerActions": "Actions"
+    }
   }
 }
