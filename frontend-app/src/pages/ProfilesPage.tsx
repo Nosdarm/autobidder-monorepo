@@ -49,7 +49,7 @@ import {
   useUpdateProfile,
   useDeleteProfile
 } from '@/hooks/useProfileQueries';
-import type { Profile } from '@/services/profileService';
+import type { Profile, NewProfileData, UpdateProfileData } from '@/services/profileService';
 
 
 export default function ProfilesPage() {
@@ -88,15 +88,31 @@ export default function ProfilesPage() {
   const handleSaveProfile = async (formData: ProfileFormValues) => {
     try {
       if (formData.id) {
-        await updateProfileMutation.mutateAsync({ id: formData.id, data: formData });
+        const updateData: UpdateProfileData = { // Explicitly type for clarity
+          name: formData.name,
+          profile_type: formData.type, // Map here
+          autobid_enabled: formData.autobidEnabled, // Map here
+          skills: formData.skills,
+          experience_level: formData.experience_level,
+        };
+        await updateProfileMutation.mutateAsync({ id: formData.id, data: updateData });
       } else {
-        const { id, ...newProfileData } = formData;
-        await createProfileMutation.mutateAsync(newProfileData);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id, ...restOfFormData } = formData; 
+        const createData: NewProfileData = { // Explicitly type for clarity
+          name: restOfFormData.name,
+          profile_type: restOfFormData.type, // Map here
+          autobid_enabled: restOfFormData.autobidEnabled, // Map here
+          skills: restOfFormData.skills,
+          experience_level: restOfFormData.experience_level,
+        };
+        await createProfileMutation.mutateAsync(createData);
       }
       setIsCreateModalOpen(false);
       setIsEditModalOpen(false);
     } catch (e) {
       console.error("Failed to save profile:", e);
+      // Consider adding user-facing error handling here, e.g., using a toast
     }
   };
   
