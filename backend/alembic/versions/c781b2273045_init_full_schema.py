@@ -51,7 +51,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_profiles_id'), 'profiles', ['id'], unique=False)
     op.create_table('ai_prompts',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('profile_id', sa.Integer(), nullable=False),
+    sa.Column('profile_id', sa.String(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('prompt_text', sa.String(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=True),
@@ -61,7 +61,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_ai_prompts_id'), 'ai_prompts', ['id'], unique=False)
     op.create_table('autobid_logs',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('profile_id', sa.Integer(), nullable=False),
+    sa.Column('profile_id', sa.String(), nullable=False),
     sa.Column('job_title', sa.String(), nullable=False),
     sa.Column('job_link', sa.String(), nullable=False),
     sa.Column('bid_text', sa.Text(), nullable=True),
