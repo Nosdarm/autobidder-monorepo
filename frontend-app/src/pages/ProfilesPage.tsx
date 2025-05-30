@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import ProfileCreateForm, { ProfileFormValues } from '@/components/profiles/ProfileCreateForm';
-import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
+import { useAuth } from '@/components/contexts/AuthContext'; // Import useAuth
 import {
   useProfiles,
   useCreateProfile,
