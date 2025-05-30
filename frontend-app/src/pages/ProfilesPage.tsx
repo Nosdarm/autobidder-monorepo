@@ -75,7 +75,8 @@ export default function ProfilesPage() {
   };
 
   const handleOpenEditModal = (profile: Profile) => {
-    const profileWithDate = { ...profile, createdAt: new Date(profile.createdAt) };
+    const processedCreatedAt = profile.createdAt ? new Date(profile.createdAt) : undefined;
+    const profileWithDate = { ...profile, createdAt: processedCreatedAt };
     setProfileToEdit(profileWithDate);
     setIsEditModalOpen(true);
   };

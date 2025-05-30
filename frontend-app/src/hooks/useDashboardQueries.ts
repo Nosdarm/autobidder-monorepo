@@ -20,19 +20,21 @@ export function useDashboardSummaryStats() {
 }
 
 // Hook to fetch individual dashboard statistics
-export function useIndividualDashboardStats() {
-  return useQuery<IndividualDashboardStats, Error>({
+export function useIndividualDashboardStats(options?: Omit<UseQueryOptions<IndividualDashboardStats, Error, IndividualDashboardStats, ReturnType<typeof dashboardKeys.individualStats>>, 'queryKey' | 'queryFn'>) {
+  return useQuery({
     queryKey: dashboardKeys.individualStats(),
     queryFn: getIndividualDashboardStats,
     // staleTime: 5 * 60 * 1000, // 5 minutes
+    ...options
   });
 }
 
 // Hook to fetch agency dashboard statistics
-export function useAgencyDashboardStats() {
-  return useQuery<AgencyDashboardStats, Error>({
+export function useAgencyDashboardStats(options?: Omit<UseQueryOptions<AgencyDashboardStats, Error, AgencyDashboardStats, ReturnType<typeof dashboardKeys.agencyStats>>, 'queryKey' | 'queryFn'>) {
+  return useQuery({
     queryKey: dashboardKeys.agencyStats(),
     queryFn: getAgencyDashboardStats,
     // staleTime: 5 * 60 * 1000, // 5 minutes
+    ...options
   });
 }
