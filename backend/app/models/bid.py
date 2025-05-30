@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Float, ForeignKey, DateTime, JSON, Intege
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from app.database import Base
+from app.db.base import Base
 from .job import Job # Import the Job model
 
 

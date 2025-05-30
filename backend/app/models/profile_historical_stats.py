@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Float, DateTime, ForeignKey
 from sqlalchemy.orm import relationship # Keep for potential future use, even if not used now
 from datetime import datetime
-from app.database import Base
+from app.db.base import Base
 
 class ProfileHistoricalStats(Base):
     __tablename__ = "profile_historical_stats"

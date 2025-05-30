@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Boolean, ForeignKey, JSON, Integer # Adde
 from sqlalchemy.dialects.postgresql import JSON # Explicit import for clarity if needed, though sqlalchemy.JSON often suffices
 from sqlalchemy.orm import relationship
 
-from app.database import Base
+from app.db.base import Base
 
 
 class Profile(Base):

@@ -2,7 +2,7 @@ from sqlalchemy import (Column, Integer, String, Float,
                         ForeignKey, DateTime, Text)
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from app.database import Base
+from app.db.base import Base
 
 
 class AutobidLog(Base):

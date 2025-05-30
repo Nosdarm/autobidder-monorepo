@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     
     # Database
     # Users should update this in their .env file for their specific PostgreSQL setup.
-    DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/autobidder_db"
+    DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/autobidderdb"
 
     # JWT Authentication
     SECRET_KEY: str # No default, must be set in environment

@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy import Column, String, Text, JSON # Added JSON
 from sqlalchemy.dialects.postgresql import UUID
-from app.database import Base
+from app.db.base import Base
 
 class Job(Base):
     __tablename__ = "jobs"

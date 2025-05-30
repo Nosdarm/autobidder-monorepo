@@ -35,6 +35,7 @@ def upgrade() -> None:
     sa.Column('hashed_password', sa.String(), nullable=False),
     sa.Column('role', sa.String(), nullable=True),
     sa.Column('is_verified', sa.Boolean(), nullable=True),
+    sa.Column('account_type', sa.Enum('INDIVIDUAL', 'AGENCY', name='accounttype'), nullable=False, server_default='INDIVIDUAL'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
@@ -43,7 +44,7 @@ def upgrade() -> None:
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('profile_type', sa.String(), nullable=False),
-    sa.Column('user_id', sa.String(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('autobid_enabled', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
@@ -51,7 +52,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_profiles_id'), 'profiles', ['id'], unique=False)
     op.create_table('ai_prompts',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('profile_id', sa.Integer(), nullable=False),
+    sa.Column('profile_id', sa.String(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('prompt_text', sa.String(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=True),
@@ -61,7 +62,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_ai_prompts_id'), 'ai_prompts', ['id'], unique=False)
     op.create_table('autobid_logs',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('profile_id', sa.Integer(), nullable=False),
+    sa.Column('profile_id', sa.String(), nullable=False),
     sa.Column('job_title', sa.String(), nullable=False),
     sa.Column('job_link', sa.String(), nullable=False),
     sa.Column('bid_text', sa.Text(), nullable=True),

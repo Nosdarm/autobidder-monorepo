@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID # For UUID type if needed for id
-from app.database import Base
+from app.db.base import Base
 
 class BidOutcome(Base):
     __tablename__ = "bid_outcomes"
