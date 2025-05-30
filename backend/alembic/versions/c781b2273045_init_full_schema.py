@@ -35,6 +35,7 @@ def upgrade() -> None:
     sa.Column('hashed_password', sa.String(), nullable=False),
     sa.Column('role', sa.String(), nullable=True),
     sa.Column('is_verified', sa.Boolean(), nullable=True),
+    sa.Column('account_type', sa.Enum('INDIVIDUAL', 'AGENCY', name='accounttype'), nullable=False, server_default='INDIVIDUAL'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
