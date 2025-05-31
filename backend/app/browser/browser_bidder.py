@@ -1,20 +1,25 @@
 import os
 import asyncio
 import random
-import logging # Added
-from typing import Optional # Added
+import logging
+from typing import Optional, List # Added List
+import urllib.parse # Added urllib
 
-from playwright.async_api import async_playwright, Page, TimeoutError as PlaywrightTimeoutError # Added Page, PlaywrightTimeoutError
-from sqlalchemy.ext.asyncio import AsyncSession # Added for type hinting
+from playwright.async_api import async_playwright, Page, TimeoutError as PlaywrightTimeoutError
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select # Added select
+# from sqlalchemy.orm import Session as SyncSession # Removed SyncSession import
 
-from app.services.captcha_service import solve_captcha_task # Changed from solve_cloudflare
+from app.services.captcha_service import solve_captcha_task
 from app.services.bid_generation_service import generate_bid_text_async
-# from app.database import get_db # This will be passed as AsyncSession
-from app.services.autobid_log_service import log_autobid_attempt # Assuming this can work with sync or async session based on its implementation
-from app.services.score_helper import calculate_keyword_affinity_score # Assuming this can work with sync or async session
-from app.config import settings # Added
+# from app.database import SessionLocal # Removed SessionLocal import
+from app.services.autobid_log_service import log_autobid_attempt
+from app.services.score_helper import calculate_keyword_affinity_score
+from app.config import settings
+from app.models.autobid_settings import AutobidSettings # Added
+from app.models.profile import Profile # Added
 
-logger = logging.getLogger(__name__) # Added
+logger = logging.getLogger(__name__)
 
 USER_DATA_DIR = "user_data" # TODO: Ideally from settings
 
@@ -138,36 +143,44 @@ async def _handle_captcha_on_page(page: Page, max_solve_retries: int = CAPTCHA_S
             logger.warning(f"Unknown CAPTCHA type '{captcha_type}' detected by _is_captcha_present. Defaulting solver task type to HCaptchaTaskProxyless.")
             # Fallback or raise error if type is critical and unhandled
 
-        token = None
+        token: Optional[str] = None # Ensure token is defined before try block
+        captcha_solved_this_attempt = False
         try:
-            logger.info(f"Calling CAPTCHA solving service with task_type: {task_type_for_solver} for URL: {captcha_details['url']}")
+            logger.info(f"Calling CAPTCHA solving service with task_type: {task_type_for_solver} for URL: {captcha_details['url']} (Sitekey: {captcha_details['sitekey']})")
             token = await solve_captcha_task(
                 url=captcha_details["url"],
                 sitekey=captcha_details["sitekey"],
                 task_type=task_type_for_solver
             )
-        except (ValueError, RuntimeError, TimeoutError) as e_solve: # Specific errors from solve_captcha_task
-            logger.error(f"CAPTCHA solving service failed for {captcha_type} at {captcha_details['url']}: {e_solve}", exc_info=True)
-        except Exception as e_solve_general: # Other unexpected errors
-            logger.error(f"Unexpected error from CAPTCHA solving service for {captcha_type} at {captcha_details['url']}: {e_solve_general}", exc_info=True)
-
-        if token:
-            if await _submit_captcha_token(page, captcha_type, token): # Pass original captcha_type for textarea selection
-                logger.info(f"{captcha_type.capitalize()} solved and token submitted successfully.")
-                return True
+            if token:
+                logger.info(f"CAPTCHA token received for {captcha_type}.")
+                if await _submit_captcha_token(page, captcha_type, token): # Pass original captcha_type for textarea selection
+                    logger.info(f"{captcha_type.capitalize()} solved and token submitted successfully to page.")
+                    captcha_solved_this_attempt = True # Mark as successfully handled for this attempt
+                else:
+                    logger.error(f"Failed to submit solved {captcha_type} token to textarea.")
+                    # Token submission failed, likely a page issue. Retrying might help if page state is unstable.
             else:
-                logger.error(f"Failed to submit solved {captcha_type} token to textarea.")
-                # If submitting token fails, retrying solve might not help unless page state changes.
-                # Allow retry if max_solve_retries not reached, as it might be a transient page issue.
-        else:
-            # This log occurs if solve_captcha_task returned None or raised an exception handled above.
-            logger.warning("CAPTCHA solving service did not return a token or failed.")
+                # solve_captcha_task itself logged that it didn't return a token.
+                logger.warning(f"CAPTCHA service did not return a token for {captcha_type} at {captcha_details['url']}.")
 
+        except (ValueError, RuntimeError, TimeoutError) as e_solve:
+            logger.error(f"CAPTCHA solving service ({settings.CAPTCHA_PROVIDER_NAME}) failed for {captcha_type} at {captcha_details['url']} with error: {e_solve}", exc_info=False) # exc_info=False as service logs details
+        except Exception as e_solve_general:
+            logger.error(f"Unexpected error calling CAPTCHA solving service for {captcha_type} at {captcha_details['url']}: {e_solve_general}", exc_info=True)
+
+        if captcha_solved_this_attempt:
+            return True # CAPTCHA handled for this call of _handle_captcha_on_page
+
+        # If token was not obtained, or not submitted successfully, and retries are left:
         if attempt < max_solve_retries - 1:
-            logger.warning(f"CAPTCHA handling attempt {attempt + 1} failed for {captcha_type}. Retrying after a delay...")
-            await asyncio.sleep(random.uniform(3,5)) # Wait before full retry
+            logger.warning(f"CAPTCHA handling attempt {attempt + 1}/{max_solve_retries} failed for {captcha_type}. Retrying after a delay...")
+            await asyncio.sleep(random.uniform(3,5))
+        else: # All retries for this specific CAPTCHA instance failed
+            logger.error(f"All {max_solve_retries} attempts to solve and submit {captcha_type} CAPTCHA failed for URL: {page.url}")
 
-    logger.error(f"Failed to handle {captcha_type} after {max_solve_retries} attempts.")
+    # If loop finishes without returning True, it means all retries failed for this CAPTCHA instance
+    logger.error(f"Failed to handle {captcha_type} after {max_solve_retries} attempts for URL: {page.url}")
     return False
 
 
@@ -197,6 +210,49 @@ async def run_browser_bidder_for_profile(profile_id: str, db: AsyncSession): # A
     # Ensure `log_autobid_attempt` and `calculate_keyword_affinity_score` are compatible with AsyncSession
     # or are run in a way that doesn't block the event loop if they are synchronous.
 
+    logger.info(f"Fetching autobid settings and profile data for profile_id: {profile_id}")
+    try:
+        autobid_setting_stmt = select(AutobidSettings).where(AutobidSettings.profile_id == profile_id)
+        autobid_setting_result = await db.execute(autobid_setting_stmt)
+        autobid_setting: Optional[AutobidSettings] = autobid_setting_result.scalars().first()
+
+        profile_stmt = select(Profile).where(Profile.id == profile_id) # Profile.id is usually UUID, ensure profile_id matches type
+        profile_result = await db.execute(profile_stmt)
+        profile_obj: Optional[Profile] = profile_result.scalars().first()
+
+        if not autobid_setting or not profile_obj:
+            logger.error(f"Autobid settings or profile object not found for profile_id: {profile_id}. Aborting bid run.")
+            return
+    except Exception as e_fetch:
+        logger.error(f"Database error fetching settings/profile for {profile_id}: {e_fetch}", exc_info=True)
+        return
+
+    # TODO: Add a 'search_terms: Optional[List[str]] = Column(JSON, nullable=True)' field to the AutobidSettings model.
+    # This field should be populated via API or other means.
+    search_keywords: Optional[List[str]] = getattr(autobid_setting, 'search_terms', None)
+
+    if not search_keywords and profile_obj.skills: # Assuming profile_obj.skills is List[str]
+        logger.info(f"No specific search_terms found in AutobidSettings for profile {profile_id}. Using profile skills as fallback keywords: {profile_obj.skills}")
+        search_keywords = profile_obj.skills
+    elif not search_keywords:
+        logger.warning(f"No search_terms in AutobidSettings and no skills in Profile for profile {profile_id}. Proceeding with general feed (Upwork's default algorithm).")
+
+    job_search_url = "https://www.upwork.com/nx/jobs/search/" # New default Upwork job search URL
+    if search_keywords and isinstance(search_keywords, list) and len(search_keywords) > 0:
+        # Use up to 3 keywords, join them with space for Upwork query
+        query_string = " ".join(search_keywords[:3])
+        encoded_query = urllib.parse.quote_plus(query_string)
+        job_search_url = f"https://www.upwork.com/nx/jobs/search/?q={encoded_query}&sort=recency" # Added sort by recency
+        logger.info(f"Using targeted search URL for profile {profile_id}: {job_search_url}")
+    else:
+        logger.info(f"Using general job feed URL for profile {profile_id}: {job_search_url} (sorted by recency by default on Upwork, often)")
+        # If no specific keywords, Upwork might use its own algorithm. Adding sort=recency might be good.
+        if "?" not in job_search_url:
+            job_search_url += "?sort=recency"
+        else:
+            job_search_url += "&sort=recency"
+
+
     async with async_playwright() as p:
         context = None
         try:
@@ -208,39 +264,56 @@ async def run_browser_bidder_for_profile(profile_id: str, db: AsyncSession): # A
             )
             page = await context.new_page()
 
-            initial_url = "https://www.upwork.com/ab/find-work/"
-            logger.info(f"Navigating to initial page: {initial_url}")
-            await page.goto(initial_url, wait_until="networkidle", timeout=GENERAL_PAGE_LOAD_TIMEOUT)
+            logger.info(f"Navigating to job search page: {job_search_url}")
+            await page.goto(job_search_url, wait_until="networkidle", timeout=GENERAL_PAGE_LOAD_TIMEOUT)
 
-            logger.info("Initial page load complete. Checking for CAPTCHA...")
-            await _handle_captcha_on_page(page) # Handle CAPTCHA if present on initial load
+            logger.info("Job search page load complete. Checking for CAPTCHA...")
+            await _handle_captcha_on_page(page)
 
-            # Current page might have changed if CAPTCHA was handled by reload (though current helper does not reload)
-            # Re-verify or ensure navigation to find-work if needed.
-            if "find-work" not in page.url:
-                 logger.info(f"Not on find-work page after initial CAPTCHA check (current: {page.url}). Re-navigating.")
-                 await page.goto(initial_url, wait_until="networkidle", timeout=GENERAL_PAGE_LOAD_TIMEOUT)
+            # Verify current URL after potential CAPTCHA handling
+            if urllib.parse.urlparse(page.url).path != urllib.parse.urlparse(job_search_url).path:
+                 logger.info(f"URL changed after CAPTCHA check (current: {page.url}). Re-navigating to intended search URL: {job_search_url}")
+                 await page.goto(job_search_url, wait_until="networkidle", timeout=GENERAL_PAGE_LOAD_TIMEOUT)
                  await _handle_captcha_on_page(page) # Check again
 
-            # TODO: CRITICAL - Selector for job cards needs verification
-            job_cards_selector = ".job-tile-title a"
+            # TODO: CRITICAL - Selector for job cards needs verification. This selector is for the 'Find Work' page.
+            # The /nx/jobs/search/ page might have different selectors.
+            job_cards_selector = "section[data-test='job-tile-list'] article.job-tile" # Example for /nx/jobs/search
+            # Or more specific: job_cards_selector = "div[data-qa='job-tile']"
+            # Need to find title link within this card.
             logger.info(f"Looking for job cards with selector: {job_cards_selector}")
-            await page.wait_for_selector(job_cards_selector, timeout=GENERAL_PAGE_LOAD_TIMEOUT)
-            job_cards = await page.locator(job_cards_selector).all()
+            await page.wait_for_selector(job_cards_selector, timeout=GENERAL_PAGE_LOAD_TIMEOUT) # Wait for list container
+
+            # TODO: CRITICAL - Selector for the title/link within each job card on /nx/jobs/search/ page
+            # This example assumes a structure. This needs careful inspection.
+            # Example: within each `article.job-tile`, find `h3 > a` or similar for title and link
+            job_card_locators = await page.locator(job_cards_selector).all() # Get all cards
 
             jobs_details_list = []
-            if not job_cards:
-                logger.warning("No job cards found on find-work page.")
+            if not job_card_locators:
+                logger.warning(f"No job cards found on job search page using selector: {job_cards_selector}")
 
-            for job_card_locator in job_cards:
-                title = await job_card_locator.inner_text()
-                href = await job_card_locator.get_attribute("href")
-                if title and href:
-                    jobs_details_list.append({"title": title.strip(), "link": f"https://www.upwork.com{href.split('?')[0]}"}) # Clean link
+            for card_locator in job_card_locators:
+                # TODO: CRITICAL - Adjust these selectors for title and link within the card
+                title_element = card_locator.locator("h3 > a").first # Example
+                # Or: title_element = card_locator.locator("a[data-test='job-title-link']").first
+                try:
+                    await title_element.wait_for(state="visible", timeout=2000) # Short timeout per card
+                    title = await title_element.inner_text()
+                    href = await title_element.get_attribute("href")
+                    if title and href:
+                        # Links on /nx/jobs/search/ are usually relative, e.g., /jobs/xxxxxxxx
+                        full_link = f"https://www.upwork.com{href.split('?')[0]}" if href.startswith("/jobs/") else href.split('?')[0]
+                        jobs_details_list.append({"title": title.strip(), "link": full_link})
+                except PlaywrightTimeoutError:
+                    logger.warning("Could not find title/link in a job card, or it timed out.")
+                except Exception as e_card:
+                    logger.warning(f"Error processing a job card: {e_card}")
 
-            logger.info(f"Found {len(jobs_details_list)} jobs to process.")
+            logger.info(f"Found {len(jobs_details_list)} jobs to process from search results.")
 
-            for job_data_from_feed in jobs_details_list[:1]: # Process only the first job for now as per original logic
+            # TODO: Make the number of jobs to process configurable (e.g., via AutobidSettings.jobs_to_check_per_run)
+            for job_data_from_feed in jobs_details_list[:1]:
                 job_link = job_data_from_feed["link"]
                 job_title_from_feed = job_data_from_feed["title"]
                 logger.info(f"Processing job: {job_title_from_feed} - {job_link}")
@@ -301,7 +374,7 @@ async def run_browser_bidder_for_profile(profile_id: str, db: AsyncSession): # A
                 except Exception as e:
                     logger.error(f"Failed to fill cover letter for {job_title_from_feed}: {e}. Skipping bid.")
                     # Log attempt as failed due to form interaction error
-                    log_autobid_attempt(db=db, profile_id=int(profile_id), job_title=job_title_from_feed, job_link=job_link, bid_text=bid_text, status="failed", error_message=f"Failed to fill cover letter: {str(e)}")
+                    await log_autobid_attempt(db=db, profile_id=int(profile_id), job_title=job_title_from_feed, job_link=job_link, bid_text=bid_text, status="failed", error_message=f"Failed to fill cover letter: {str(e)}")
                     continue
 
                 await fill_rate_increase_fields(page) # Assuming this is still relevant
@@ -328,47 +401,63 @@ async def run_browser_bidder_for_profile(profile_id: str, db: AsyncSession): # A
                         await page.wait_for_selector(PROPOSAL_SUCCESS_INDICATOR_SELECTOR, timeout=SUCCESS_INDICATOR_TIMEOUT)
                         logger.info(f"Proposal submitted successfully for: {job_title_from_feed}")
                         submitted_successfully = True
-                        break # Exit retry loop
+                        break # Exit SUBMIT_ATTEMPTS loop
 
-                    except PlaywrightTimeoutError: # This covers timeout for click or for waiting for PROPOSAL_SUCCESS_INDICATOR_SELECTOR
-                        logger.warning(f"Timeout during proposal submission process for {job_title_from_feed}. Attempt {attempt + 1}.")
+                    except PlaywrightTimeoutError:
+                        logger.warning(f"Timeout during proposal submission process for '{job_title_from_feed}'. Attempt {attempt + 1}/{MAX_SUBMIT_ATTEMPTS}.")
                         captcha_present_after_fail = await _is_captcha_present(page)
                         if captcha_present_after_fail:
-                            logger.info(f"CAPTCHA ({captcha_present_after_fail}) detected after failed/timed-out submit attempt.")
-                            captcha_handled_successfully = await _handle_captcha_on_page(page) # This has its own retries for solving
+                            logger.info(f"CAPTCHA ({captcha_present_after_fail}) detected after failed/timed-out submit for '{job_title_from_feed}'.")
+                            captcha_handled_successfully = await _handle_captcha_on_page(page)
                             if captcha_handled_successfully:
-                                logger.info("CAPTCHA handled after failed submission. Will retry submitting proposal.")
-                                await asyncio.sleep(random.uniform(2,4)) # Wait a bit after CAPTCHA solve before retrying
-                                continue # Retry submission in the next loop iteration
-                            else:
-                                logger.error(f"CAPTCHA was present after failed submission for '{job_title_from_feed}', but failed to solve it. Aborting bid.")
+                                logger.info(f"CAPTCHA handled for '{job_title_from_feed}'. Will retry submitting proposal.")
+                                await asyncio.sleep(random.uniform(2,4))
+                                continue # Retry submission (next iteration of MAX_SUBMIT_ATTEMPTS loop)
+                            else: # _handle_captcha_on_page returned False
+                                logger.error(f"CAPTCHA was present for '{job_title_from_feed}', but failed to solve it after its internal retries. Aborting bid for this job.")
                                 break # Abort MAX_SUBMIT_ATTEMPTS loop for this job
-                        else: # No CAPTCHA detected after timeout, but submission also failed (no success indicator)
+                        else:
                             logger.info(f"No CAPTCHA detected for '{job_title_from_feed}' after failed/timed-out submit attempt.")
-                            try: # Check for specific error messages on the page
+                            try:
                                 error_banner = page.locator(PROPOSAL_ERROR_INDICATOR_SELECTOR).first
-                                if await error_banner.is_visible(timeout=1000): # Quick check for error message
+                                if await error_banner.is_visible(timeout=1000):
                                     error_text = await error_banner.text_content()
-                                    logger.error(f"Proposal submission failed for '{job_title_from_feed}' with on-page error: {error_text.strip()}. Aborting bid.")
-                                else: # No specific error message found
-                                    logger.error(f"Proposal submission failed for '{job_title_from_feed}': No success indicator, no CAPTCHA, and no specific on-page error message detected. Aborting bid.")
-                            except PlaywrightTimeoutError: # Timeout waiting for error banner itself
-                                logger.error(f"Proposal submission failed for '{job_title_from_feed}': No success indicator, no CAPTCHA, and timeout checking for on-page error messages. Aborting bid.")
+                                    logger.error(f"Proposal submission for '{job_title_from_feed}' failed with on-page error: {error_text.strip()}. Aborting bid.")
+                                else:
+                                    logger.error(f"Proposal submission for '{job_title_from_feed}' failed: No success indicator, no CAPTCHA, and no specific on-page error message detected. Aborting bid.")
+                            except PlaywrightTimeoutError:
+                                logger.error(f"Proposal submission for '{job_title_from_feed}' failed: No success indicator, no CAPTCHA, and timeout checking for on-page error messages. Aborting bid.")
                             break # Abort MAX_SUBMIT_ATTEMPTS loop for this job
-                    except Exception as e_submit:
+                    except Exception as e_submit: # Catch any other non-timeout errors during submission
                         logger.error(f"Unexpected error during proposal submission attempt {attempt + 1} for '{job_title_from_feed}': {e_submit}", exc_info=True)
                         break # Abort MAX_SUBMIT_ATTEMPTS loop for this job
 
+                if not submitted_successfully and attempt == MAX_SUBMIT_ATTEMPTS - 1:
+                    logger.error(f"All {MAX_SUBMIT_ATTEMPTS} attempts to submit proposal for '{job_title_from_feed}' failed.")
+
                 # Log final bid attempt status
                 if submitted_successfully:
-                    # Call logging for success
-                    # score = calculate_keyword_affinity_score(db=db, profile_id=int(profile_id), job_description=job_description_text)
-                    # log_autobid_attempt(db=db, profile_id=int(profile_id), job_title=job_title_from_feed, job_link=job_link, bid_text=bid_text, status="success", score=score)
-                    logger.info(f"Successfully submitted proposal for job: {job_title_from_feed}")
+                    score_value: Optional[float] = None
+                    # sync_db_for_log_score: Optional[SyncSession] = None # Removed
+                    try:
+                        # sync_db_for_log_score = SessionLocal() # Removed
+                        logger.info(f"Calculating score for job '{job_title_from_feed}' in separate thread.")
+                        score_value = await asyncio.to_thread(
+                            calculate_keyword_affinity_score, int(profile_id), job_description_text
+                            # TODO: calculate_keyword_affinity_score needs to be refactored to manage its own sync DB session
+                            # if it's run in a thread and needs DB access.
+                        )
+                    except Exception as e_score:
+                        logger.error(f"Error calculating score for '{job_title_from_feed}': {e_score}", exc_info=True)
+                    # finally: # Finally block no longer needed for sync_db_for_log_score here
+                        # if sync_db_for_log_score:
+                            # sync_db_for_log_score.close()
+
+                    await log_autobid_attempt(db=db, profile_id=int(profile_id), job_title=job_title_from_feed, job_link=job_link, bid_text=bid_text, status="success", score=score_value)
+                    logger.info(f"Successfully submitted proposal and logged for job: {job_title_from_feed}")
                 else:
-                    # Call logging for failure, including if all attempts were exhausted
-                    logger.error(f"Failed to submit proposal for job: {job_title_from_feed} after {MAX_SUBMIT_ATTEMPTS} attempts or due to critical error.")
-                    # log_autobid_attempt(db=db, profile_id=int(profile_id), job_title=job_title_from_feed, job_link=job_link, bid_text=bid_text, status="failed", error_message=f"Failed after {MAX_SUBMIT_ATTEMPTS} attempts or CAPTCHA/other errors.")
+                    logger.error(f"Failed to submit proposal for job: {job_title_from_feed} (Loop completed or broke due to error). Logging failure.")
+                    await log_autobid_attempt(db=db, profile_id=int(profile_id), job_title=job_title_from_feed, job_link=job_link, bid_text=bid_text, status="failed", error_message=f"Failed after {MAX_SUBMIT_ATTEMPTS} attempts or CAPTCHA/other errors.")
 
                 await asyncio.sleep(random.uniform(3,5)) # Delay before processing next job
 
