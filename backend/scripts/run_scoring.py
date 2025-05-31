@@ -8,7 +8,7 @@ PROJECT_ROOT_BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 if PROJECT_ROOT_BACKEND not in sys.path:
     sys.path.insert(0, PROJECT_ROOT_BACKEND)
 
-from app.db.session import SessionLocal
+from app.db.session import AsyncSessionLocal # Changed from SessionLocal
 from app.services.job_service import update_jobs_with_predicted_scores
 from app.services.ml_service import load_model_on_startup, MODEL
 from app.config import settings
@@ -24,7 +24,7 @@ async def main():
     print("ML Model is loaded or was already loaded.")
 
     # SessionLocal должен быть async session factory
-    async with SessionLocal() as db:
+    async with AsyncSessionLocal() as db: # Changed from SessionLocal
         try:
             print("Starting to update job scores...")
             await update_jobs_with_predicted_scores(db)
