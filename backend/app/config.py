@@ -1,7 +1,7 @@
 import os
 from typing import List, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import EmailStr, AnyHttpUrl
+from pydantic import EmailStr, AnyHttpUrl, Field # Consolidated Field import
 
 class Settings(BaseSettings):
     # General App Settings
@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
     # Captcha Service Configuration
     CAPTCHA_PROVIDER_NAME: str = Field(default="capmonster", env="CAPTCHA_PROVIDER_NAME") # "capmonster", "2captcha", "anticaptcha"
-
+    
     # Provider-specific API Keys
     CAPMONSTER_API_KEY: Optional[str] = Field(default=None, env="CAPMONSTER_API_KEY")
     TWOCAPTCHA_API_KEY: Optional[str] = Field(default=None, env="TWOCAPTCHA_API_KEY")
@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     # AntiCaptcha URLs
     ANTICAPTCHA_CREATE_TASK_URL: AnyHttpUrl = Field(default="https://api.anti-captcha.com/createTask", env="ANTICAPTCHA_CREATE_TASK_URL") # type: ignore
     ANTICAPTCHA_GET_TASK_URL: AnyHttpUrl = Field(default="https://api.anti-captcha.com/getTaskResult", env="ANTICAPTCHA_GET_TASK_URL") # type: ignore
-
+    
     # Email Service (Mailtrap example)
     MAILTRAP_HOST: Optional[str] = None
     MAILTRAP_PORT: int = 2525
@@ -69,7 +69,7 @@ class Settings(BaseSettings):
     ML_PREDICTION_ENDPOINT_URL: AnyHttpUrl = "http://localhost:8000/ml/predict_success_proba" # type: ignore
     ML_PROBABILITY_THRESHOLD: float = 0.5
     MODEL_PATH: str = "app/ml_model/artifacts/model.joblib"
-    # Note: The old CAPTCHA_API_KEY and CAPTCHA_PROVIDER fields are now replaced by
+    # Note: The old CAPTCHA_API_KEY and CAPTCHA_PROVIDER fields are now replaced by 
     # CAPTCHA_PROVIDER_NAME and provider-specific API key fields.
 
     # Upwork Credentials for automated login (optional)
