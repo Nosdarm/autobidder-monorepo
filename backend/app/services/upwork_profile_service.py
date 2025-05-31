@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # USER_DATA_DIR should ideally be sourced from a centralized configuration.
 # For now, keeping it as a local constant for consistency with the original file.
-USER_DATA_DIR = "user_data"
+USER_DATA_DIR = "user_data" 
 
 class UpworkProfileFetcher:
     """
@@ -135,7 +135,7 @@ class UpworkProfileFetcher:
                 logger.warning(f"Title selector '{title_selector}' found, but content was empty for profile {self.profile_id}.")
         except Exception as e:
             logger.error(f"Could not parse title for profile {self.profile_id} using selector '{title_selector}': {e}")
-
+            
         # Overview/Summary
         # TODO: CRITICAL - Replace with the correct Playwright selector for Overview/Summary
         overview_selector = "div.profile-overview-section p" # Placeholder
@@ -214,7 +214,7 @@ class UpworkProfileFetcher:
             if new_overview and new_overview != "Overview not found" and local_profile.overview != new_overview:
                 local_profile.overview = new_overview
                 updated_fields.append("overview")
-
+            
             # Update skills if new data is a list and different
             new_skills = upwork_data.get('skills')
             # Ensure new_skills is a list; it defaults to [] if parsing fails.
@@ -318,14 +318,14 @@ async def fetch_and_update_upwork_profile(profile_id: str, db: AsyncSession):
 if __name__ == "__main__":
     # This __main__ block is for example and basic testing.
     # It requires a running asyncio event loop and proper database setup to function fully.
-
+    
     # Setup basic logging for the __main__ example if not configured elsewhere
     if not logging.getLogger().hasHandlers():
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     async def main_test_profile_fetch():
         logger.info("Running __main__ test for UpworkProfileFetcher...")
-
+        
         # Mock DB session for local testing to avoid real DB dependency for this example
         class MockAsyncSession:
             async def execute(self, query):
@@ -340,9 +340,9 @@ if __name__ == "__main__":
             async def close(self): logger.debug("Mock DB Close")
 
         mock_db_session = MockAsyncSession()
-
+        
         test_profile_id_main = "test_profile_for_main"
-
+        
         # Ensure the user_data_dir for the test profile exists to simulate a previously saved session
         test_profile_user_data_dir = os.path.join(USER_DATA_DIR, test_profile_id_main)
         if not os.path.exists(test_profile_user_data_dir):
@@ -363,7 +363,7 @@ async def trigger_scheduled_upwork_profile_updates(db_override: Optional[AsyncSe
     Scheduled task to iterate through profiles and update their Upwork data.
     """
     logger.info("Scheduler: Starting scheduled Upwork profile updates...")
-
+    
     db_session_is_managed_locally = False
     if db_override:
         db = db_override
@@ -373,7 +373,7 @@ async def trigger_scheduled_upwork_profile_updates(db_override: Optional[AsyncSe
         logger.info("Scheduler: Created new local DB session.")
 
     try:
-        # Fetch all profiles to update.
+        # Fetch all profiles to update. 
         # Consider filtering for active profiles or those requiring an update based on some logic.
         # For example: .where(Profile.is_active == True) or .where(Profile.needs_upwork_update == True)
         stmt = select(Profile) # Selecting all profiles for now
@@ -394,7 +394,7 @@ async def trigger_scheduled_upwork_profile_updates(db_override: Optional[AsyncSe
                 logger.info(f"Scheduler: Successfully processed profile_id: {profile_id_str}")
             except Exception as e: # Catch errors from fetch_and_update_upwork_profile
                 logger.error(f"Scheduler: Error processing profile_id {profile_id_str}: {e}", exc_info=True)
-
+            
             # Small delay to be respectful to Upwork servers and avoid rate limiting.
             await asyncio.sleep(5) # Increased delay to 5 seconds
 
