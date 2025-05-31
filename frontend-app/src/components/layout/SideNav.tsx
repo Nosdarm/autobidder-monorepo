@@ -46,6 +46,17 @@ export default function SideNav() {
               AI Prompts
             </NavLink>
           </li>
+          {/* START: New ML Analytics Link */}
+          <li className="mt-1">
+            <NavLink
+              to="/ml/metrics"
+              className={({ isActive }) => `${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}
+            >
+              <span className="mr-2">📈</span> {/* Placeholder Icon for ML Analytics */}
+              ML Analytics
+            </NavLink>
+          </li>
+          {/* END: New ML Analytics Link */}
           {user?.account_type === 'agency' && (
             <li className="mt-1" data-cy="sidenav-link-team">
               <NavLink
