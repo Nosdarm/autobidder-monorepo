@@ -1,7 +1,7 @@
 import os
 from typing import List, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import EmailStr, AnyHttpUrl
+from pydantic import EmailStr, AnyHttpUrl, Field # Consolidated Field import
 
 class Settings(BaseSettings):
     # General App Settings
