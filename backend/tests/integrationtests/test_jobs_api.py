@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 import uuid
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator, Optional, Iterator # Add Iterator
 
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine, create_async_engine
@@ -20,7 +20,7 @@ from backend.app.database import get_db # Dependency override
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test_jobs_api.sqlite" # Use file for persistence across client calls if needed, or :memory:
 
 @pytest.fixture(scope="session")
-def test_engine() -> AsyncGenerator[AsyncEngine, None]:
+def test_engine() -> Iterator[AsyncEngine]: # Changed from AsyncGenerator[AsyncEngine, None]
     """Session-scoped engine for test database."""
     engine = create_async_engine(TEST_DATABASE_URL, echo=False) # echo=True for debugging SQL
     yield engine
