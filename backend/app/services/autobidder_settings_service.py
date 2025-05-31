@@ -1,6 +1,7 @@
 import logging
-from typing import List # Added List
-from sqlalchemy.ext.asyncio import AsyncSession # Added AsyncSession
+from typing import List, Optional # Added Optional for Session type hint
+from sqlalchemy.orm import Session # Added missing import for Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import HTTPException # This might not be needed here if errors are handled differently in async service
 # Убедитесь, что AutobidSettings импортирован правильно
@@ -46,7 +47,7 @@ async def get_enabled_autobid_settings(db: AsyncSession) -> List[AutobidSettings
 def get_autobid_settings(profile_id: str):
     logging.info(
         f">>> Entering get_autobid_settings for profile_id: {profile_id}")
-    db: Session | None = None
+    db: Optional[Session] = None # Corrected: single type hint
     try:
         db = SessionLocal()
         result = db.execute(
@@ -86,7 +87,7 @@ def upsert_autobid_settings(profile_id: str, enabled: bool, daily_limit: int):
     logging.info(
         f">>> Entering upsert_autobid_settings for profile_id: {profile_id}"
     )
-    db: Session | None = None
+    db: Optional[Session] = None # Applied Optional type hint here as well
     try:
         db = SessionLocal()
         result = db.execute(
