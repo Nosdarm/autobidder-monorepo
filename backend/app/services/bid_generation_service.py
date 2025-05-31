@@ -10,7 +10,7 @@ from openai import AsyncOpenAI, OpenAIError # Assuming this is already async com
 from app.models.ai_prompt import AIPrompt # Ensure this model is compatible with async sessions if used directly
 from app.services.score_helper import calculate_keyword_affinity_score
 from app.config import settings
-from app.database import SessionLocal # Added for sync session workaround
+# from app.database import SessionLocal # Removed import
 
 # --- Клиент OpenAI ---
 # Лучше инициализировать клиент один раз.
@@ -79,15 +79,17 @@ async def generate_bid_text_async(
 
     # --- 3. Расчёт keyword-модификатора ---
     modifier = 0.0 # Default modifier
-    sync_db_for_score = None # Initialize sync_db_for_score before try block
+    # sync_db_for_score = None # Removed
     try:
-        # Create sync session only if we are going to use it
-        sync_db_for_score = SessionLocal()
+        # sync_db_for_score = SessionLocal() # Removed
         logging.info(f"Calculating keyword affinity score for profile {profile_id} in a separate thread.")
-        # Ensure all arguments passed to calculate_keyword_affinity_score are of the correct type it expects.
-        # profile_id is already a string from the function signature.
+        # profile_id is already a string.
         modifier = await asyncio.to_thread(
-            calculate_keyword_affinity_score, sync_db_for_score, profile_id, job_description
+            calculate_keyword_affinity_score, profile_id, job_description
+            # TODO: calculate_keyword_affinity_score needs to be refactored to manage its own sync DB session
+            # if it's run in a thread and needs DB access. Cannot pass AsyncSession,
+            # and importing/using SessionLocal here directly couples this async service too tightly with sync session management
+            # for a helper function that should ideally be self-contained or fully async.
         )
         user_prompt += f"\n\n[AI note: affinity score +{modifier}]" # Add modifier to prompt
     except Exception as e_score:
@@ -96,10 +98,10 @@ async def generate_bid_text_async(
             exc_info=True
         )
         # Continue without modifier if calculation fails, modifier remains 0.0
-    finally:
-        if sync_db_for_score: # Check if it was created before trying to close
-            sync_db_for_score.close()
-            logging.debug("Synchronous session for score calculation closed.")
+    # finally: # Finally block no longer needed for sync_db_for_score here
+        # if sync_db_for_score:
+            # sync_db_for_score.close()
+            # logging.debug("Synchronous session for score calculation closed.")
 
     # --- 4. Генерация через OpenAI (асинхронно) ---
     if not openai_available or client is None:
