@@ -21,10 +21,12 @@ from sklearn.metrics import classification_report
 import joblib
 from app.config import settings # Added import
 
-PROFILES_FILE = "profiles.json"
-JOBS_FILE = "jobs.json"
-RESPONSES_FILE = "responses_log.json"
-MODEL_FILE = settings.MODEL_PATH # Changed to use settings.MODEL_PATH
+# Define DATA_DIR relative to PROJECT_ROOT_BACKEND
+DATA_DIR = os.path.join(PROJECT_ROOT_BACKEND, "data")
+PROFILES_FILE = os.path.join(DATA_DIR, "profiles.json")
+JOBS_FILE = os.path.join(DATA_DIR, "jobs.json")
+RESPONSES_FILE = os.path.join(DATA_DIR, "responses_log.json")
+MODEL_FILE = settings.MODEL_PATH # This is already an absolute path from settings
 
 # 📥 Загрузка
 def load_json(path):
