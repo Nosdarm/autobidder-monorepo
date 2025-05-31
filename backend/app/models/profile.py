@@ -1,4 +1,5 @@
-from sqlalchemy import Column, String, Boolean, ForeignKey, JSON, Integer # Added JSON
+import uuid # Added import
+from sqlalchemy import Column, String, Boolean, ForeignKey, JSON, Integer, Text # Added JSON and Text
 from sqlalchemy.dialects.postgresql import JSON # Explicit import for clarity if needed, though sqlalchemy.JSON often suffices
 from sqlalchemy.orm import relationship
 
@@ -9,7 +10,7 @@ class Profile(Base):
     """Модель SQLAlchemy для таблицы профилей."""
     __tablename__ = "profiles"
 
-    id = Column(String, primary_key=True, index=True)
+    id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     name = Column(String, nullable=False)
     profile_type = Column(String, nullable=False)
     user_id = Column(
@@ -20,6 +21,8 @@ class Profile(Base):
         nullable=False)
     skills = Column(JSON, nullable=True)
     experience_level = Column(String, nullable=True)
+    title = Column(String, nullable=True) # New field
+    overview = Column(Text, nullable=True) # New field
 
     autobid_enabled = Column(Boolean, default=False)
 

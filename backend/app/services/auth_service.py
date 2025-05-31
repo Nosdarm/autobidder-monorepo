@@ -6,7 +6,7 @@ from app.models.user import User, AccountType # Import AccountType
 from app.schemas.auth import RegisterInput, LoginInput
 from app.schemas.user import UserOut # Added import
 from app.models.profile import Profile
-from app.schemas.profile_schema import ProfileCreate
+from app.schemas.profile import ProfileCreate # Corrected import path
 from app.utils.auth import (
     get_password_hash,
     verify_password,

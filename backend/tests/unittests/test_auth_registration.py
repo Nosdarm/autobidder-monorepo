@@ -93,7 +93,7 @@ def test_register_agency_user(client: TestClient, agency_user_payload: Dict[str,
     # For agency users, the profile type should also be "personal" as per current implementation
     # If agency users should have an "agency" profile by default, the service logic needs adjustment.
     # Based on current service code, it's always "personal".
-    assert profile_in_db.profile_type == "personal"
+    assert profile_in_db.profile_type == "personal" 
     assert profile_in_db.user_id == user_in_db.id
 
 def test_register_existing_email(client: TestClient, individual_user_payload: Dict[str, str], db: Session):
