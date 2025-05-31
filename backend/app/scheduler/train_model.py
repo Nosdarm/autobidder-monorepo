@@ -1,5 +1,16 @@
-import json
 import os
+import sys
+
+# Calculate the path to the 'backend' directory
+# __file__ is backend/app/scheduler/train_model.py
+# os.path.dirname(__file__) is backend/app/scheduler/
+# os.path.dirname(os.path.dirname(__file__)) is backend/app/
+# os.path.dirname(os.path.dirname(os.path.dirname(__file__))) is backend/
+PROJECT_ROOT_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if PROJECT_ROOT_BACKEND not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT_BACKEND) # Insert at the beginning to ensure it's checked first
+
+import json
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
