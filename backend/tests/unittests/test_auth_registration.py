@@ -9,6 +9,7 @@ from typing import Dict
 from app.main import app # Adjust if your app instance is elsewhere
 from app.config import settings # For JWT secret and algorithm
 from app.models.user import AccountType as UserAccountTypeEnum, User as UserModel
+from app.models.profile import Profile # Added import for Profile model
 from app.schemas.user import UserOut as UserOutSchema # For response validation
 from app.schemas.auth import TokenResponse # For login response validation
 
@@ -62,6 +63,13 @@ def test_register_individual_user(client: TestClient, individual_user_payload: D
     assert user_in_db.account_type == UserAccountTypeEnum.INDIVIDUAL
     assert user_in_db.is_verified is False # Assuming default is False
 
+    # Verify default profile creation
+    profile_in_db = db.query(Profile).filter(Profile.user_id == user_in_db.id).first()
+    assert profile_in_db is not None
+    assert profile_in_db.name == "Default Profile"
+    assert profile_in_db.profile_type == "personal"
+    assert profile_in_db.user_id == user_in_db.id
+
 def test_register_agency_user(client: TestClient, agency_user_payload: Dict[str, str], db: Session):
     response = client.post("/auth/register", json=agency_user_payload)
     assert response.status_code == 201, response.text
@@ -77,6 +85,16 @@ def test_register_agency_user(client: TestClient, agency_user_payload: Dict[str,
     assert user_in_db.role == "super_admin"
     assert user_in_db.account_type == UserAccountTypeEnum.AGENCY
     assert user_in_db.is_verified is False
+
+    # Verify default profile creation
+    profile_in_db = db.query(Profile).filter(Profile.user_id == user_in_db.id).first()
+    assert profile_in_db is not None
+    assert profile_in_db.name == "Default Profile"
+    # For agency users, the profile type should also be "personal" as per current implementation
+    # If agency users should have an "agency" profile by default, the service logic needs adjustment.
+    # Based on current service code, it's always "personal".
+    assert profile_in_db.profile_type == "personal" 
+    assert profile_in_db.user_id == user_in_db.id
 
 def test_register_existing_email(client: TestClient, individual_user_payload: Dict[str, str], db: Session):
     # First registration

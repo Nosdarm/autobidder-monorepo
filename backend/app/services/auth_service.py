@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User, AccountType # Import AccountType
 from app.schemas.auth import RegisterInput, LoginInput
 from app.schemas.user import UserOut # Added import
+from app.models.profile import Profile
+from app.schemas.profile import ProfileCreate # Corrected import path
 from app.utils.auth import (
     get_password_hash,
     verify_password,
@@ -36,6 +38,19 @@ async def register_user_service(data: RegisterInput, db: AsyncSession):
     db.add(user)
     await db.commit()
     await db.refresh(user)
+
+    # Create a default profile
+    profile_data = ProfileCreate(
+        user_id=user.id,
+        name="Default Profile",
+        profile_type="personal", # Changed from "general" to "personal"
+        skills=[],
+        experience_level=None
+    )
+    profile = Profile(**profile_data.model_dump())
+    db.add(profile)
+    await db.commit()
+    # await db.refresh(profile) # Optional: if you need to use the refreshed profile object
 
     # These two lines MUST be present
     token = create_access_token({"sub": user.email})

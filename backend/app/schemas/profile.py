@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Literal, Optional, List, Any # Added List and Any
+from typing import Literal, Optional, List
+from app.schemas.user import UserOut # Changed import for circular dependency fix
 
 # --- Схемы для Профиля ---
 
@@ -11,13 +12,15 @@ class ProfileBase(BaseModel):
     autobid_enabled: bool = Field(
         False, description="Is autobidder enabled for this profile"
     )
-    skills: Optional[List[str]] = Field(None, description="List of skills") # Changed to List[str]
+    skills: Optional[List[str]] = Field(None, description="List of skills")
     experience_level: Optional[str] = Field(None, description="Experience level")
+    title: Optional[str] = Field(None, description="Profile title/headline") # New field
+    overview: Optional[str] = Field(None, description="Profile overview/summary") # New field
 
 class ProfileCreate(ProfileBase):
-    user_id: str # user_id is required for creation, but not in ProfileBase for updates
+    user_id: int
 
-class ProfileUpdate(BaseModel): # Using BaseModel directly for more flexibility in updates
+class ProfileUpdate(BaseModel):
     name: Optional[str] = Field(None, description="New profile name")
     profile_type: Optional[Literal["personal", "agency"]] = Field(
         None, description="New profile type"
@@ -27,15 +30,17 @@ class ProfileUpdate(BaseModel): # Using BaseModel directly for more flexibility 
     )
     skills: Optional[List[str]] = Field(None, description="New list of skills")
     experience_level: Optional[str] = Field(None, description="New experience level")
+    title: Optional[str] = Field(None, description="New profile title/headline") # New field
+    overview: Optional[str] = Field(None, description="New profile overview/summary") # New field
 
 class ProfileInDBBase(ProfileBase):
-    id: str
-    user_id: str
+    id: str  # Profile ID is a string (UUID)
+    user_id: int # User ID is an integer
     model_config = ConfigDict(from_attributes=True)
 
-class Profile(ProfileInDBBase):
+class Profile(ProfileInDBBase): # This is the Pydantic schema for outputting Profile data
     pass
 
-class ProfileWithOwner(Profile): # Example if you need to nest owner info
-    # owner: Optional[User] # Assuming User schema from .user
-    pass
+# Optional: If ProfileWithOwner is used elsewhere, keep it. Otherwise, it can be removed for simplicity.
+class ProfileWithOwner(Profile):
+    owner: Optional[UserOut] = None # Changed type hint for circular dependency fix
