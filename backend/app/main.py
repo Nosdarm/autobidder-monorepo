@@ -70,7 +70,7 @@ app.include_router(shared_templates_router, prefix="/templates",       tags=["Sh
 app.include_router(autobidder_router,       prefix="/autobidder",      tags=["Autobidder"])
 app.include_router(autobid_logs_router,     prefix="/autobidder/logs", tags=["Autobidder Logs"])
 app.include_router(ai_prompts_router,       prefix="/ai",              tags=["AI Prompts"])
-app.include_router(jobs_router,             prefix="/jobs",            tags=["Jobs"]) # Added jobs_router
+app.include_router(jobs_router,             prefix="/api/v1/jobs",            tags=["Jobs"]) # Changed prefix
 app.include_router(ws_router.router,        prefix="/ws",              tags=["WebSockets"]) # Include WebSocket router
 app.include_router(agency_management_router, prefix="/agency",         tags=["Agency Management"]) # Include new router
 
