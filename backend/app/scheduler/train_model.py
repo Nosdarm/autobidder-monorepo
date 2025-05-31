@@ -91,7 +91,37 @@ def execute_training_logic():
     # 4 rows: 3 train, 1 test.
     # The test data in test_train_model.py creates 4 rows, so 3 train, 1 test. y_train should be okay.
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y if len(y.unique()) > 1 else None)
+    # Calculate class counts to determine if stratification is possible
+    if y.empty:
+        print("Error: Target variable 'y' is empty. Cannot proceed with training.")
+        # This case should ideally be caught by `if df.empty:` check earlier.
+        # If df is not empty but y is, it implies an issue in df construction or column naming.
+        stratify_option = None
+    else:
+        try:
+            y_counts = np.bincount(y) # Assumes y contains non-negative integers (0, 1)
+            # Check if y_counts has at least two elements (for two classes)
+            # and if the minimum count is less than 2 (needed for a binary split for train_test_split)
+            # n_splits for StratifiedKFold (used internally by train_test_split for stratification) must be <= n_samples in each class.
+            # Since test_size=0.2 implies a 5-fold split conceptually for the smaller set,
+            # the smallest class must have at least 2 samples to allow 1 for test, 1 for train if split is 50/50.
+            # More generally, if test_size = 0.2 (meaning 1/5th goes to test), then smallest class needs at least 2 members
+            # for stratified split to be meaningful (one for test, one for train).
+            # If smallest class has k members, test set gets ceil(0.2*k) and train gets floor(0.8*k) or vice-versa.
+            # For stratification to work, each class must have at least n_splits members, where n_splits is
+            # related to test_size (e.g., for test_size=0.2, n_splits is effectively 5).
+            # A simpler check: if smallest class < 2, stratification is problematic for typical splits.
+            if len(y_counts) < 2 or y_counts.min() < 2:
+                min_class_count_val = y_counts.min() if len(y_counts) > 0 else 0
+                print(f"Warning: The least populated class in y has only {min_class_count_val} member(s) (or y does not have at least two classes). Stratification will be disabled to prevent errors.")
+                stratify_option = None
+            else:
+                stratify_option = y
+        except Exception as e: # Catch potential errors with y that bincount might not like (e.g. non-integer, negative)
+            print(f"Warning: Could not determine class counts for stratification due to: {e}. Stratification will be disabled.")
+            stratify_option = None
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=stratify_option)
 
     if len(y_train.unique()) < 2:
         print(f"⚠️ y_train has only {len(y_train.unique())} unique labels after splitting. LogisticRegression training may fail or be suboptimal.")
