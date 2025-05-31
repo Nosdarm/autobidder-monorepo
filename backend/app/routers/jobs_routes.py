@@ -8,15 +8,51 @@ from app.database import get_db # get_db should provide AsyncSession
 from app.schemas.job import Job as JobSchema, JobCreate, JobUpdate # Aliased Job to JobSchema
 from app.services.job_service import JobService, get_job_service # Actual service and dependency
 from app.models.user import User as UserModel # For current_user dependency
-from app.services.auth_service import get_current_active_user # For user authentication
+# Removed: from app.services.auth_service import get_current_active_user
+from app.auth.jwt import get_current_user_with_role # New import
+from app.services.auth_service import get_current_user_service # New import
+
 
 router = APIRouter()
+
+# New local dependency function for user authentication
+async def get_current_user_dependency(
+    payload: dict = Depends(get_current_user_with_role),
+    db: AsyncSession = Depends(get_db),
+) -> UserModel:
+    email_from_token = payload.get("sub")
+    if not email_from_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload (missing sub)",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Workaround for get_current_user_service expecting "user_id" to be an email
+    service_payload = {"user_id": email_from_token}
+
+    user = await get_current_user_service(service_payload, db)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or invalid credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    # TODO: Add role checks here if necessary, e.g.
+    # required_roles = ["admin", "user"] # Example
+    # if payload.get("role") not in required_roles:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,
+    #         detail="Operation not permitted for this user role",
+    #     )
+    return user
+
 
 @router.post("/", response_model=JobSchema, status_code=status.HTTP_201_CREATED)
 async def create_job_endpoint(
     job_in: JobCreate,
     job_service: JobService = Depends(get_job_service),
-    current_user: UserModel = Depends(get_current_active_user) # Added user dependency
+    current_user: UserModel = Depends(get_current_user_dependency) # Changed dependency
 ):
     """
     Create a new job.
@@ -63,7 +99,7 @@ async def update_job_endpoint(
     job_id: uuid.UUID,
     job_in: JobUpdate,
     job_service: JobService = Depends(get_job_service),
-    current_user: UserModel = Depends(get_current_active_user) # Added user dependency
+    current_user: UserModel = Depends(get_current_user_dependency) # Changed dependency
 ):
     """
     Update an existing job.
@@ -78,7 +114,7 @@ async def update_job_endpoint(
 async def delete_job_endpoint(
     job_id: uuid.UUID,
     job_service: JobService = Depends(get_job_service),
-    current_user: UserModel = Depends(get_current_active_user) # Added user dependency
+    current_user: UserModel = Depends(get_current_user_dependency) # Changed dependency
 ):
     """
     Delete a job by its internal ID.
