@@ -1,6 +1,7 @@
 # Игнорировать .env файлы
 .env
 *.env
+__pycache__/
 
 # Игнорировать папку .history
 .history/
