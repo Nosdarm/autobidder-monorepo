@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from playwright.async_api import async_playwright, Playwright, Page, BrowserContext # Added Page, BrowserContext
 import os
 import logging
+from typing import Optional # Added missing import
 from app.models.profile import Profile
 from sqlalchemy import select
 from app.database import AsyncSessionLocal
