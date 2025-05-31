@@ -15,7 +15,7 @@ class ProfileBase(BaseModel):
     experience_level: Optional[str] = Field(None, description="Experience level")
 
 class ProfileCreate(ProfileBase):
-    user_id: str # user_id is required for creation, but not in ProfileBase for updates
+    user_id: int # user_id is required for creation, but not in ProfileBase for updates
 
 class ProfileUpdate(BaseModel): # Using BaseModel directly for more flexibility in updates
     name: Optional[str] = Field(None, description="New profile name")
@@ -30,7 +30,7 @@ class ProfileUpdate(BaseModel): # Using BaseModel directly for more flexibility 
 
 class ProfileInDBBase(ProfileBase):
     id: str
-    user_id: str
+    user_id: int
     model_config = ConfigDict(from_attributes=True)
 
 class Profile(ProfileInDBBase):
