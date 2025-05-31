@@ -75,7 +75,7 @@ class Settings(BaseSettings):
     # ML Model Settings
     ML_PREDICTION_ENDPOINT_URL: AnyHttpUrl = "http://localhost:8000/ml/predict_success_proba" # type: ignore
     ML_PROBABILITY_THRESHOLD: float = 0.5
-    MODEL_PATH: str = "app/ml_model/artifacts/model.joblib"
+    MODEL_PATH: str = os.path.join(BACKEND_DIR, "app", "ml_model", "artifacts", "model.joblib")
     # Note: The old CAPTCHA_API_KEY and CAPTCHA_PROVIDER fields are now replaced by 
     # CAPTCHA_PROVIDER_NAME and provider-specific API key fields.
 
