@@ -123,10 +123,20 @@ def execute_training_logic():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=stratify_option)
 
-    if len(y_train.unique()) < 2:
-        print(f"⚠️ y_train has only {len(y_train.unique())} unique labels after splitting. LogisticRegression training may fail or be suboptimal.")
-        # Optionally, handle this: e.g., don't train, or log a more severe warning.
-        # For now, allow it to proceed. sklearn might handle it or warn.
+    # Check if y_train has samples from at least two classes
+    if len(np.unique(y_train)) < 2:
+        print(f"❌ Error: Training data (y_train) contains only {len(np.unique(y_train))} unique class(es) after splitting. Model training cannot proceed with fewer than 2 classes.")
+        print(f"This usually means the overall dataset (derived from jobs.json, profiles.json, responses_log.json) has too few samples of the minority class or only one outcome type.")
+        print(f"Please ensure your data files provide enough examples for at least two distinct outcomes for the model to learn from.")
+        # Attempt to print class distribution in y_train for more diagnostics
+        unique_ytrain, counts_ytrain = np.unique(y_train, return_counts=True)
+        print(f"y_train class distribution: {dict(zip(unique_ytrain, counts_ytrain))}")
+        print("Exiting training script.")
+        exit() # Exit the script as training is not possible
+    else:
+        # Optional: Print y_train class distribution for successful splits too for visibility
+        unique_ytrain, counts_ytrain = np.unique(y_train, return_counts=True)
+        print(f"ℹ️ y_train class distribution for training: {dict(zip(unique_ytrain, counts_ytrain))}")
 
     try:
         pipeline.fit(X_train, y_train)
