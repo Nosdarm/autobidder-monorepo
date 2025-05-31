@@ -3,6 +3,13 @@ from typing import List, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import EmailStr, AnyHttpUrl, Field # Consolidated Field import
 
+# Determine the base directory (backend/)
+# __file__ is backend/app/config.py
+# os.path.dirname(__file__) is backend/app/
+# os.path.dirname(os.path.dirname(__file__)) is backend/
+BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ENV_FILE_PATH = os.path.join(BACKEND_DIR, ".env")
+
 class Settings(BaseSettings):
     # General App Settings
     APP_NAME: str = "AutoBidder API"
@@ -77,7 +84,7 @@ class Settings(BaseSettings):
     UPWORK_PASSWORD: Optional[str] = Field(default=None, env="UPWORK_PASSWORD")
     
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=ENV_FILE_PATH, # Use the calculated path
         env_file_encoding='utf-8',
         extra='ignore'
     )
