@@ -8,11 +8,12 @@ from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 import joblib
+from app.config import settings # Added import
 
 PROFILES_FILE = "profiles.json"
 JOBS_FILE = "jobs.json"
 RESPONSES_FILE = "responses_log.json"
-MODEL_FILE = "model.pkl"
+MODEL_FILE = settings.MODEL_PATH # Changed to use settings.MODEL_PATH
 
 # 📥 Загрузка
 def load_json(path):
@@ -99,6 +100,10 @@ def execute_training_logic():
         print("⚠️ X_test is empty. Skipping classification report.")
 
     # 💾 Сохраняем модель
+    model_dir = os.path.dirname(MODEL_FILE)
+    if model_dir: # Ensure model_dir is not empty
+        os.makedirs(model_dir, exist_ok=True)
+
     joblib.dump(pipeline, MODEL_FILE)
     print(f"✅ Модель сохранена в {MODEL_FILE}")
 
