@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 import uuid
-from typing import AsyncGenerator, Optional, Iterator # Add Iterator
+from typing import AsyncGenerator, Optional, Iterator, Generator # Add Generator
 
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine, create_async_engine
@@ -47,7 +47,7 @@ async def override_get_db(test_engine: AsyncEngine) -> AsyncGenerator[AsyncSessi
         await conn.run_sync(Base.metadata.drop_all)
 
 @pytest.fixture(scope="function")
-def client(override_get_db: AsyncSession) -> TestClient:
+def client(override_get_db: AsyncSession) -> Generator[TestClient, None, None]: # Changed to Generator
     """
     Provides a TestClient instance with the database dependency overridden.
     """
