@@ -19,5 +19,26 @@
     "description": "Redesign a WordPress site with Elementor.",
     "budget": 150,
     "created_at": "2025-05-31T16:23:42.516804+00:00"
+  },
+  {
+    "id": "dd2870c8-5185-429f-bca5-b78331a1e36d",
+    "title": "Figma dashboard for SaaS product",
+    "description": "Looking for a UI/UX designer familiar with dashboards and Figma.",
+    "budget": 300,
+    "created_at": "2025-05-31T18:52:29.765121+00:00"
+  },
+  {
+    "id": "527dfad8-e293-405b-9097-707a18035054",
+    "title": "Logo for fashion brand",
+    "description": "Need a stylish logo for a new clothing line.",
+    "budget": 50,
+    "created_at": "2025-05-31T18:52:29.765138+00:00"
+  },
+  {
+    "id": "dcd1b0f3-3484-4cf2-a54b-a0a031e38173",
+    "title": "WordPress site redesign",
+    "description": "Redesign a WordPress site with Elementor.",
+    "budget": 150,
+    "created_at": "2025-05-31T18:52:29.765146+00:00"
   }
 ]
