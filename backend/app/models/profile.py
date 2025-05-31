@@ -1,5 +1,5 @@
 import uuid # Added import
-from sqlalchemy import Column, String, Boolean, ForeignKey, JSON, Integer # Added JSON
+from sqlalchemy import Column, String, Boolean, ForeignKey, JSON, Integer, Text # Added JSON and Text
 from sqlalchemy.dialects.postgresql import JSON # Explicit import for clarity if needed, though sqlalchemy.JSON often suffices
 from sqlalchemy.orm import relationship
 
@@ -21,6 +21,8 @@ class Profile(Base):
         nullable=False)
     skills = Column(JSON, nullable=True)
     experience_level = Column(String, nullable=True)
+    title = Column(String, nullable=True) # New field
+    overview = Column(Text, nullable=True) # New field
 
     autobid_enabled = Column(Boolean, default=False)
 

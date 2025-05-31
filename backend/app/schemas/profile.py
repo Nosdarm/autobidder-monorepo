@@ -14,6 +14,8 @@ class ProfileBase(BaseModel):
     )
     skills: Optional[List[str]] = Field(None, description="List of skills")
     experience_level: Optional[str] = Field(None, description="Experience level")
+    title: Optional[str] = Field(None, description="Profile title/headline") # New field
+    overview: Optional[str] = Field(None, description="Profile overview/summary") # New field
 
 class ProfileCreate(ProfileBase):
     user_id: int
@@ -28,6 +30,8 @@ class ProfileUpdate(BaseModel):
     )
     skills: Optional[List[str]] = Field(None, description="New list of skills")
     experience_level: Optional[str] = Field(None, description="New experience level")
+    title: Optional[str] = Field(None, description="New profile title/headline") # New field
+    overview: Optional[str] = Field(None, description="New profile overview/summary") # New field
 
 class ProfileInDBBase(ProfileBase):
     id: str  # Profile ID is a string (UUID)
