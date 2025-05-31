@@ -21,14 +21,22 @@ import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton'; // For loading states
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"; // Import table components
 import { 
   useMLMetricsCards, 
   useMLLineChartData, 
-  useMLBarChartData 
+  useMLBarChartData,
+  useMLJobsWithScores // Added hook
 } from '@/hooks/useMLAnalyticsQueries';
+import type { Job as JobData } from '@/services/mlAnalyticsService'; // Added JobData import
 // MetricCardData and ChartDataPoint types are now imported from the service or defined in hooks if needed for props
-// For simplicity, if they are simple and only used here, can keep local definitions or import from service.
-// Assuming they are implicitly handled by the hook return types for now.
 
 
 // Map titles to icons (since icon component cannot be in JSON from API)
@@ -67,6 +75,13 @@ export default function MLAnalyticsPage() {
     error: errorBarChart 
   } = useMLBarChartData(dateRange);
 
+  const {
+    data: jobsWithScoresData = [],
+    isLoading: isLoadingJobsWithScores,
+    isError: isErrorJobsWithScores,
+    error: errorJobsWithScores,
+  } = useMLJobsWithScores(dateRange);
+
 
   // Helper component for Metric Card Skeleton
   const MetricCardSkeleton = () => (
@@ -94,6 +109,30 @@ export default function MLAnalyticsPage() {
       </CardHeader>
       <CardContent className="h-[350px] pt-4 flex items-center justify-center">
         <Skeleton className="h-full w-full" />
+      </CardContent>
+    </Card>
+  );
+
+  const JobsTableSkeleton = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <Skeleton className="h-6 w-1/2" />
+        </CardTitle>
+        <CardDescription>
+          <Skeleton className="h-4 w-3/4" />
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex justify-between space-x-4 p-2 border-b">
+              <Skeleton className="h-5 w-1/3" />
+              <Skeleton className="h-5 w-1/4" />
+              <Skeleton className="h-5 w-1/4" />
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );
@@ -257,6 +296,56 @@ export default function MLAnalyticsPage() {
             </Card>
           )}
         </div>
+      </section>
+
+      {/* Jobs with Predicted Scores Section */}
+      <section>
+        <h2 className="text-2xl font-semibold mb-4">Jobs Overview with Predicted Scores</h2>
+        {isLoadingJobsWithScores ? (
+          <JobsTableSkeleton />
+        ) : isErrorJobsWithScores ? (
+          <ErrorDisplay title="Loading Jobs Data" error={errorJobsWithScores} />
+        ) : jobsWithScoresData.length === 0 ? (
+           <Card>
+            <CardHeader>
+              <CardTitle>Jobs Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>No jobs data available for the selected date range.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Jobs & Scores</CardTitle>
+              <CardDescription>
+                List of recent jobs and their predicted success scores.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Upwork ID</TableHead>
+                    <TableHead className="text-right">Predicted Score</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {jobsWithScoresData.map((job: JobData) => (
+                    <TableRow key={job.id}>
+                      <TableCell className="font-medium">{job.title}</TableCell>
+                      <TableCell>{job.upwork_job_id || 'N/A'}</TableCell>
+                      <TableCell className="text-right">
+                        {job.predicted_score != null ? job.predicted_score.toFixed(1) : 'N/A'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
       </section>
     </div>
   );

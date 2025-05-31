@@ -4,8 +4,10 @@ import {
   fetchMetricsCardsData,
   fetchLineChartData,
   fetchBarChartData,
+  fetchJobsWithScores, // Added
   MetricCardData,
   ChartDataPoint,
+  Job as JobData, // Added Job interface
 } from '@/services/mlAnalyticsService';
 import { mlAnalyticsKeys } from '@/lib/queryKeys';
 
@@ -31,6 +33,16 @@ export function useMLLineChartData(dateRange?: DateRange) {
   return useQuery<ChartDataPoint[], Error>({
     queryKey: mlAnalyticsKeys.lineChart(stableDateRangeKey),
     queryFn: () => fetchLineChartData(dateRange),
+    // keepPreviousData: true,
+  });
+}
+
+// Hook to fetch jobs with scores data
+export function useMLJobsWithScores(dateRange?: DateRange) {
+  const stableDateRangeKey = createDateRangeKey(dateRange);
+  return useQuery<JobData[], Error>({ // Use JobData interface
+    queryKey: mlAnalyticsKeys.jobsWithScores(stableDateRangeKey),
+    queryFn: () => fetchJobsWithScores(dateRange),
     // keepPreviousData: true,
   });
 }

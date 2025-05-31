@@ -12,6 +12,7 @@ class JobBase(BaseModel):
     posted_time: Optional[datetime.datetime] = None
     raw_data: Optional[Dict[str, Any]] = None # For storing the raw JSON from Upwork
     description_embedding: Optional[List[float]] = None # Assuming embedding is a list of floats
+    predicted_score: Optional[float] = None # Added predicted_score
 
     model_config = ConfigDict(
         from_attributes=True, # Enables ORM mode for Pydantic V2

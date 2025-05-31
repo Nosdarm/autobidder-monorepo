@@ -252,3 +252,123 @@ async def test_delete_job_not_found(job_service: JobService):
     non_existent_uuid = uuid.uuid4()
     delete_result = await job_service.delete_job(job_id=non_existent_uuid)
     assert delete_result is False
+
+# --- Tests for update_jobs_with_predicted_scores ---
+from unittest.mock import AsyncMock, MagicMock, patch
+
+# Import the function to be tested and other necessary items
+from backend.app.services.job_service import update_jobs_with_predicted_scores
+from backend.app.schemas.ml import PredictionResponse # For mocking return value
+
+@pytest.mark.asyncio
+async def test_update_jobs_with_predicted_scores_success():
+    # 1. Mock AsyncSession and its methods
+    mock_db_session = AsyncMock(spec=AsyncSession)
+
+    # Setup mock Job objects
+    mock_job1 = Job(id=uuid.uuid4(), title="Job 1", description="Desc 1", predicted_score=None)
+    mock_job2 = Job(id=uuid.uuid4(), title="Job 2", description="Desc 2", predicted_score=None)
+
+    # Configure mock_db_session.execute chain
+    # query(Job).filter(Job.predicted_score == None).all()
+    # In SQLAlchemy 2.0 style with AsyncSession, this is:
+    # result = await session.execute(select(Job).where(Job.predicted_score == None))
+    # jobs_to_update = result.scalars().all()
+
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.all.return_value = [mock_job1, mock_job2]
+    mock_db_session.execute.return_value = mock_result
+
+    # 2. Mock predict_success_proba_service
+    # This function is imported in job_service.py as:
+    # from app.services.ml_service import predict_success_proba_service, MODEL
+    # So we need to patch it there.
+    mock_prediction_response = PredictionResponse(success_probability=0.9, score=90.0, model_info="test_model")
+
+    with patch('backend.app.services.job_service.predict_success_proba_service', AsyncMock(return_value=mock_prediction_response)) as mock_predict_service, \
+         patch('backend.app.services.job_service.MODEL', MagicMock()) as mock_model_global, \
+         patch('backend.app.services.job_service.logger') as mock_logger: # Optional: mock logger
+
+        # Ensure the global MODEL is not None so the function doesn't exit early
+        # The MagicMock above for mock_model_global already ensures it's not None.
+
+        # 3. Call the function
+        await update_jobs_with_predicted_scores(db=mock_db_session)
+
+        # 4. Assertions
+        # Check if predict_success_proba_service was called for each job
+        assert mock_predict_service.call_count == 2
+
+        # Check if job objects were updated
+        assert mock_job1.predicted_score == 90.0
+        assert mock_job2.predicted_score == 90.0
+
+        # Check if db.commit was called
+        mock_db_session.commit.assert_called_once()
+
+        # Optional: Check logging
+        mock_logger.info.assert_any_call(f"Found 2 job(s) to update with predicted scores.")
+        mock_logger.info.assert_any_call(f"Successfully updated job ID: {mock_job1.id} with predicted_score: 90.0")
+        mock_logger.info.assert_any_call(f"Successfully updated job ID: {mock_job2.id} with predicted_score: 90.0")
+
+@pytest.mark.asyncio
+async def test_update_jobs_with_predicted_scores_no_jobs_to_update():
+    mock_db_session = AsyncMock(spec=AsyncSession)
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.all.return_value = [] # No jobs
+    mock_db_session.execute.return_value = mock_result
+
+    with patch('backend.app.services.job_service.predict_success_proba_service', AsyncMock()) as mock_predict_service, \
+         patch('backend.app.services.job_service.MODEL', MagicMock()) as mock_model_global, \
+         patch('backend.app.services.job_service.logger') as mock_logger:
+
+        await update_jobs_with_predicted_scores(db=mock_db_session)
+
+        mock_predict_service.assert_not_called()
+        mock_db_session.commit.assert_not_called() # Should not commit if no jobs processed
+        mock_logger.info.assert_any_call("No jobs found requiring predicted score updates.")
+
+
+@pytest.mark.asyncio
+async def test_update_jobs_with_predicted_scores_model_not_loaded():
+    mock_db_session = AsyncMock(spec=AsyncSession)
+    # Patch MODEL to be None
+    with patch('backend.app.services.job_service.MODEL', None) as mock_model_global_none, \
+         patch('backend.app.services.job_service.logger') as mock_logger:
+
+        await update_jobs_with_predicted_scores(db=mock_db_session)
+
+        mock_logger.error.assert_called_with("ML Model is not loaded. Cannot update job scores. Aborting.")
+        mock_db_session.execute.assert_not_called() # Should not attempt to fetch jobs
+
+@pytest.mark.asyncio
+async def test_update_jobs_with_predicted_scores_prediction_fails_for_one_job():
+    mock_db_session = AsyncMock(spec=AsyncSession)
+    mock_job1 = Job(id=uuid.uuid4(), title="Job 1", description="Desc 1", predicted_score=None)
+    mock_job2 = Job(id=uuid.uuid4(), title="Job 2", description="Desc 2", predicted_score=None) # Will fail
+    mock_job3 = Job(id=uuid.uuid4(), title="Job 3", description="Desc 3", predicted_score=None)
+
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.all.return_value = [mock_job1, mock_job2, mock_job3]
+    mock_db_session.execute.return_value = mock_result
+
+    # Simulate prediction failure for job2
+    async def side_effect_predict_service(input_data):
+        # Assuming input_data.features["text_feature_for_pipeline"] contains title + " " + description
+        if "Job 2 Desc 2" in input_data.features["text_feature_for_pipeline"]:
+            raise Exception("Simulated prediction error")
+        return PredictionResponse(success_probability=0.8, score=80.0, model_info="test_model")
+
+    with patch('backend.app.services.job_service.predict_success_proba_service', AsyncMock(side_effect=side_effect_predict_service)) as mock_predict_service, \
+         patch('backend.app.services.job_service.MODEL', MagicMock()) as mock_model_global, \
+         patch('backend.app.services.job_service.logger') as mock_logger:
+
+        await update_jobs_with_predicted_scores(db=mock_db_session)
+
+        assert mock_predict_service.call_count == 3
+        assert mock_job1.predicted_score == 80.0
+        assert mock_job2.predicted_score is None # Failed prediction, score not set
+        assert mock_job3.predicted_score == 80.0
+
+        mock_db_session.commit.assert_called_once() # Should still commit successful updates
+        mock_logger.error.assert_any_call(f"Error predicting score for job ID: {mock_job2.id}. Error: Simulated prediction error", exc_info=True)

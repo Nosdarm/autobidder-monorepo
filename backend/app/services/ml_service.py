@@ -97,11 +97,13 @@ async def predict_success_proba_service(input_data: PredictionFeaturesInput) -> 
         # Make prediction
         proba_array = MODEL.predict_proba(df_input)
         success_proba = float(proba_array[0, 1]) # Assuming class 1 is 'success'
+        score = success_proba * 100
         
-        logger.info(f"Request ID: {request_id} - Prediction successful. Success probability: {success_proba:.4f}")
+        logger.info(f"Request ID: {request_id} - Prediction successful. Success probability: {success_proba:.4f}, Score: {score:.2f}")
         
         return PredictionResponse(
             success_probability=success_proba,
+            score=score,
             model_info=f"Using model: {MODEL_PATH.name}" # Or more detailed model versioning
         )
 

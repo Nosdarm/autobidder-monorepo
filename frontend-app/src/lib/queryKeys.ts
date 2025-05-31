@@ -38,6 +38,7 @@ export const mlAnalyticsKeys = {
   charts: (dateRange?: object) => [...mlAnalyticsKeys.data(dateRange), 'charts'] as const,
   lineChart: (dateRange?: object) => [...mlAnalyticsKeys.charts(dateRange), 'line'] as const,
   barChart: (dateRange?: object) => [...mlAnalyticsKeys.charts(dateRange), 'bar'] as const,
+  jobsWithScores: (dateRange?: object) => [...mlAnalyticsKeys.data(dateRange), 'jobsWithScores'] as const, // Added
 };
 
 export const dashboardKeys = {

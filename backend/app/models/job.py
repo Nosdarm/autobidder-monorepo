@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, JSON, DateTime # Added DateTime
+from sqlalchemy import Column, String, Text, JSON, DateTime, Float # Added DateTime and Float
 from sqlalchemy.dialects.postgresql import UUID
 from app.db.base import Base
 
@@ -20,3 +20,4 @@ class Job(Base):
 
     # Field for embedding, assuming it will be stored as JSON or needs specific handling if it's a vector
     description_embedding = Column(JSON, nullable=True) # Stores embedding as JSON array or object
+    predicted_score = Column(Float, nullable=True)

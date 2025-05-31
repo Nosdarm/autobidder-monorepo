@@ -1,12 +1,79 @@
 import uuid
 from typing import List, Optional
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession # Ensure AsyncSession is imported
+from sqlalchemy.future import select # Ensure select is imported
 from fastapi import HTTPException, status
 
+# Remove synchronous Session, use AsyncSession
 from app.models.job import Job
 from app.schemas.job import JobCreate, JobUpdate
+from app.services.ml_service import predict_success_proba_service, MODEL # Added
+from app.schemas.ml import PredictionFeaturesInput # Added
+import logging # Added
+
+# Setup logger for this service
+logger = logging.getLogger(__name__)
+
+
+async def update_jobs_with_predicted_scores(db: AsyncSession) -> None: # Changed Session to AsyncSession
+    """
+    Updates jobs with missing predicted_score by calling the ML service.
+    Uses an asynchronous SQLAlchemy session.
+    """
+    if MODEL is None:
+        logger.error("ML Model is not loaded. Cannot update job scores. Aborting.")
+        return
+
+    logger.info("Starting to update jobs with predicted scores.")
+
+    try:
+        # Fetch jobs where predicted_score is None using an asynchronous session
+        result = await db.execute(select(Job).filter(Job.predicted_score == None))
+        jobs_to_update = result.scalars().all()
+
+        if not jobs_to_update:
+            logger.info("No jobs found requiring predicted score updates.")
+            return
+
+        logger.info(f"Found {len(jobs_to_update)} job(s) to update with predicted scores.")
+
+        for job in jobs_to_update:
+            logger.info(f"Processing job ID: {job.id} (Upwork ID: {job.upwork_job_id})")
+            if not job.title and not job.description:
+                logger.warning(f"Job ID: {job.id} has no title or description. Skipping prediction.")
+                continue
+
+            job_text_features = (job.title or "") + " " + (job.description or "")
+            features_dict = {"text_feature_for_pipeline": job_text_features}
+            input_data = PredictionFeaturesInput(features=features_dict)
+
+            try:
+                logger.debug(f"Calling predict_success_proba_service for job ID: {job.id} with features: {job_text_features[:100]}...")
+                prediction_response = await predict_success_proba_service(input_data)
+
+                if prediction_response and prediction_response.score is not None:
+                    job.predicted_score = prediction_response.score # This modification is in memory
+                    logger.info(f"Successfully updated job ID: {job.id} with predicted_score: {job.predicted_score}")
+                else:
+                    logger.warning(f"Prediction for job ID: {job.id} did not return a score or response was None.")
+
+            except HTTPException as http_exc:
+                 logger.error(f"HTTPException during prediction for job ID: {job.id}. Detail: {http_exc.detail}. Status: {http_exc.status_code}")
+            except Exception as e:
+                logger.error(f"Error predicting score for job ID: {job.id}. Error: {str(e)}", exc_info=True)
+
+        # After processing all jobs, add them to the session for update
+        # and then commit.
+        # Note: job objects are already part of the session if fetched from it.
+        # Modifying them marks them as "dirty".
+        await db.commit()
+        logger.info("Successfully committed updates for job predicted scores.")
+
+    except Exception as e:
+        logger.error(f"An error occurred during the update_jobs_with_predicted_scores process: {str(e)}", exc_info=True)
+        await db.rollback() # Rollback in case of error (async)
+    # No db.close() needed for AsyncSession managed by FastAPI dependency injection
 
 class JobService:
     def __init__(self, db_session: AsyncSession):

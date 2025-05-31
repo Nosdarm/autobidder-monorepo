@@ -3,6 +3,18 @@ import { format, subDays, eachDayOfInterval, differenceInDays } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 
 // --- Interfaces ---
+export interface Job {
+  id: string;
+  title: string;
+  description?: string;
+  upwork_job_id?: string;
+  url?: string;
+  posted_time?: string; // Consider Date object if manipulating
+  // raw_data?: any; // If needed
+  // description_embedding?: number[]; // If needed
+  predicted_score?: number; // New field
+}
+
 export interface MetricCardData {
   title: string;
   value: string;
@@ -18,6 +30,25 @@ const simulateDelay = (ms: number = 500) => new Promise(resolve => setTimeout(re
 
 // --- API Service Functions ---
 
+// Mock function to fetch jobs with predicted scores
+export const fetchJobsWithScores = async (dateRange?: DateRange): Promise<Job[]> => {
+  await simulateDelay(600);
+  console.log("API: Fetching jobs with scores for date range:", dateRange);
+  // Simulate some jobs, some with scores, some without
+  const mockJobs: Job[] = [
+    { id: "1", title: "Develop AI-Powered Chatbot", description: "Need a chatbot for customer service.", posted_time: subDays(new Date(), 2).toISOString(), predicted_score: 85.5, upwork_job_id: "up_j1" },
+    { id: "2", title: "Create Data Visualization Dashboard", description: "Dashboard for sales data.", posted_time: subDays(new Date(), 5).toISOString(), predicted_score: 72.1, upwork_job_id: "up_j2" },
+    { id: "3", title: "Migrate Database to Cloud", description: "Migrate existing SQL Server to Azure.", posted_time: subDays(new Date(), 1).toISOString(), predicted_score: undefined, upwork_job_id: "up_j3" },
+    { id: "4", title: "SEO Optimization for E-commerce Site", description: "Improve search rankings.", posted_time: subDays(new Date(), 10).toISOString(), predicted_score: 91.0, upwork_job_id: "up_j4" },
+    { id: "5", title: "Write Technical Documentation", description: "Document our new API.", posted_time: subDays(new Date(), 3).toISOString(), predicted_score: null as any, upwork_job_id: "up_j5" }, // Test null explicitly
+  ];
+  // Simulate date range filtering very crudely
+  if (dateRange?.from) {
+    return mockJobs.filter(job => job.posted_time && new Date(job.posted_time) >= dateRange.from!);
+  }
+  return mockJobs;
+};
+
 // Helper to generate a value that slightly changes based on date range
 const generateDynamicValue = (base: number, dateRange?: DateRange): number => {
   let factor = 1;
@@ -28,6 +59,14 @@ const generateDynamicValue = (base: number, dateRange?: DateRange): number => {
     factor = 1 + (dateRange.from.getDate() % 5) * 0.01; // Change by up to 5% based on from date
   }
   return parseFloat((base * factor).toFixed(2));
+};
+
+// Helper to add days, used in one of the charts, ensure it's available if it was missing.
+// Not strictly needed for job scores but part of existing file context.
+const addDays = (date: Date, days: number): Date => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
 };
 
 export const fetchMetricsCardsData = async (dateRange?: DateRange): Promise<MetricCardData[]> => {
