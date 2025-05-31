@@ -8,11 +8,11 @@ import urllib.parse # Added urllib
 from playwright.async_api import async_playwright, Page, TimeoutError as PlaywrightTimeoutError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select # Added select
-from sqlalchemy.orm import Session as SyncSession
+# from sqlalchemy.orm import Session as SyncSession # Removed SyncSession import
 
 from app.services.captcha_service import solve_captcha_task
 from app.services.bid_generation_service import generate_bid_text_async
-from app.database import SessionLocal
+# from app.database import SessionLocal # Removed SessionLocal import
 from app.services.autobid_log_service import log_autobid_attempt
 from app.services.score_helper import calculate_keyword_affinity_score
 from app.config import settings
@@ -438,18 +438,20 @@ async def run_browser_bidder_for_profile(profile_id: str, db: AsyncSession): # A
                 # Log final bid attempt status
                 if submitted_successfully:
                     score_value: Optional[float] = None
-                    sync_db_for_log_score: Optional[SyncSession] = None # Ensure it's defined for finally
+                    # sync_db_for_log_score: Optional[SyncSession] = None # Removed
                     try:
-                        sync_db_for_log_score = SessionLocal()
+                        # sync_db_for_log_score = SessionLocal() # Removed
                         logger.info(f"Calculating score for job '{job_title_from_feed}' in separate thread.")
                         score_value = await asyncio.to_thread(
-                            calculate_keyword_affinity_score, sync_db_for_log_score, int(profile_id), job_description_text
+                            calculate_keyword_affinity_score, int(profile_id), job_description_text
+                            # TODO: calculate_keyword_affinity_score needs to be refactored to manage its own sync DB session
+                            # if it's run in a thread and needs DB access.
                         )
                     except Exception as e_score:
                         logger.error(f"Error calculating score for '{job_title_from_feed}': {e_score}", exc_info=True)
-                    finally:
-                        if sync_db_for_log_score:
-                            sync_db_for_log_score.close()
+                    # finally: # Finally block no longer needed for sync_db_for_log_score here
+                        # if sync_db_for_log_score:
+                            # sync_db_for_log_score.close()
 
                     await log_autobid_attempt(db=db, profile_id=int(profile_id), job_title=job_title_from_feed, job_link=job_link, bid_text=bid_text, status="success", score=score_value)
                     logger.info(f"Successfully submitted proposal and logged for job: {job_title_from_feed}")
