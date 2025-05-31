@@ -22,7 +22,7 @@ from .bid_outcome import (
     BidOutcomeUpdate,
     BidOutcome,
 )
-from .job import JobBase, JobCreate, JobUpdate, Job, JobInDB
+from .job import JobBase, JobCreate, JobUpdate, Job # Removed JobInDB
 from .ml import PredictionFeaturesInput as MLModelFeatures, PredictionResponse as MLModelPrediction
 from .profile import (
     ProfileBase,
@@ -75,7 +75,7 @@ __all__ = [
     "JobCreate",
     "JobUpdate",
     "Job",
-    "JobInDB",
+    # "JobInDB", # Removed JobInDB
     "MLModelFeatures",
     "MLModelPrediction",
     "ProfileBase",

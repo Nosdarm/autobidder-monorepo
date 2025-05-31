@@ -13,6 +13,17 @@ class JobService:
         self.db_session = db_session
 
     async def create_job(self, job_in: JobCreate) -> Job:
+        if job_in.upwork_job_id:
+            # Check for duplicates based on upwork_job_id
+            existing_job_result = await self.db_session.execute(
+                select(Job).filter(Job.upwork_job_id == job_in.upwork_job_id)
+            )
+            if existing_job_result.scalars().first():
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Job with this Upwork ID already exists."
+                )
+
         # Here you would typically handle any specific business logic
         # before creating the job, e.g., validating description_embedding format if needed.
         job = Job(**job_in.model_dump())
@@ -27,10 +38,23 @@ class JobService:
         )
         return result.scalars().first()
 
-    async def get_jobs(self, skip: int = 0, limit: int = 100) -> List[Job]:
-        result = await self.db_session.execute(
-            select(Job).offset(skip).limit(limit)
-        )
+    async def get_jobs(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        upwork_job_id: Optional[str] = None,
+        title_contains: Optional[str] = None
+    ) -> List[Job]:
+        query = select(Job)
+
+        if upwork_job_id:
+            query = query.where(Job.upwork_job_id == upwork_job_id)
+
+        if title_contains:
+            query = query.where(Job.title.ilike(f"%{title_contains}%"))
+
+        query = query.offset(skip).limit(limit)
+        result = await self.db_session.execute(query)
         return result.scalars().all()
 
     async def update_job(self, job_id: uuid.UUID, job_in: JobUpdate) -> Optional[Job]:
