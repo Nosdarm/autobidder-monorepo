@@ -1,52 +1,46 @@
 import logging
-from sqlalchemy.orm import Session
+from typing import List # Added List
+from sqlalchemy.ext.asyncio import AsyncSession # Added AsyncSession
 from sqlalchemy import select
-from fastapi import HTTPException
+from fastapi import HTTPException # This might not be needed here if errors are handled differently in async service
 # Убедитесь, что AutobidSettings импортирован правильно
-from app.models import AutobidSettings
+from app.models.autobid_settings import AutobidSettings # Assuming this is the correct model path
+# from app.models import AutobidSettings # Original was this, ensure correct path
 
-# ---> ВАЖНО: Импортируйте SessionLocal (или ваш аналог) <---
-# ---> Путь может отличаться в вашем проекте <---
-from app.database import SessionLocal  # Предполагаем, что он здесь
+# SessionLocal (sync session factory) is not needed for the async version of get_enabled_autobid_settings
+# but kept for other synchronous functions in the file if they exist and are not refactored.
+from app.database import SessionLocal
 
 # Настройка логирования (если еще не настроено глобально)
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO) # Typically configured at application entry point
+logger = logging.getLogger(__name__) # Use module-level logger
 
-# Получение всех включённых профилей (исправлено управление сессией)
-
-
-def get_enabled_autobid_settings():
-    logging.info(">>> Entering get_enabled_autobid_settings")
-    db: Session | None = None  # Инициализируем db как None
+# Получение всех включённых профилей (refactored to async)
+async def get_enabled_autobid_settings(db: AsyncSession) -> List[AutobidSettings]:
+    logger.info(">>> Entering get_enabled_autobid_settings (async)")
     try:
-        # Создаем новую сессию ЯВНО
-        db = SessionLocal()
-        result = db.execute(
-            select(AutobidSettings).where(AutobidSettings.enabled)
+        # The AsyncSession `db` is now passed as an argument
+        stmt = select(AutobidSettings).where(AutobidSettings.enabled == True) # Explicit boolean check
+        result = await db.execute(stmt)
+        settings_list = result.scalars().all()
+        logger.info(
+            f"<<< Exiting get_enabled_autobid_settings (async) with "
+            f"{len(settings_list)} settings"
         )
-        settings = result.scalars().all()
-        logging.info(
-            f"<<< Exiting get_enabled_autobid_settings with "
-            f"{len(settings)} settings"
-        )
-        return settings
+        return settings_list
     except Exception as e:
-        logging.error(
-            f"[ERROR] Inside get_enabled_autobid_settings: {e}", exc_info=True
+        logger.error(
+            f"[ERROR] Inside get_enabled_autobid_settings (async): {e}", exc_info=True
         )
-        # Можно вернуть пустой список или перевыбросить ошибку в зависимости от
-        # логики
+        # В асинхронном контексте, особенно если это вызывается фоновой задачей,
+        # HTTPException может быть не лучшим выбором. Рассмотрите возврат пустого списка
+        # или кастомного исключения сервисного уровня.
         return []  # Возвращаем пустой список при ошибке
-    finally:
-        # ГАРАНТИРОВАННО закрываем сессию
-        if db is not None:
-            db.close()
-            logging.debug(
-                "--- Database session closed in "
-                "get_enabled_autobid_settings"
-            )
+    # No finally block to close db here, as the session is managed by the caller.
 
 # Получение настроек по профилю (исправлено управление сессией)
+# This function remains synchronous as per subtask scope, but shows original pattern.
+# If called from async code, it would need to be wrapped or refactored.
 
 
 def get_autobid_settings(profile_id: str):
