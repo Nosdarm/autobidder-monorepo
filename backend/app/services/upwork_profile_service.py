@@ -2,8 +2,10 @@ import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 from playwright.async_api import async_playwright, Playwright
 import os
-from app.models.profile import Profile # Added import
-from sqlalchemy import select # Added import
+import logging # Added import
+from app.models.profile import Profile
+from sqlalchemy import select
+from app.database import AsyncSessionLocal # Added import for session factory
 
 # Assuming USER_DATA_DIR is defined similarly elsewhere or should be configured
 USER_DATA_DIR = "user_data" # Or fetch from a config file
@@ -267,3 +269,42 @@ if __name__ == "__main__":
     # To run this example:
     # asyncio.run(main_test())
     pass
+
+
+async def trigger_scheduled_upwork_profile_updates():
+    logging.info("Scheduler: Starting scheduled Upwork profile updates...")
+    db: AsyncSession = None # Ensure db is defined in this scope
+    try:
+        # Create a new database session for this scheduled task
+        db = AsyncSessionLocal() # Using the imported async session factory
+
+        # Fetch all profiles to update.
+        # TODO: Later, this could be filtered (e.g., only active, or those with a flag)
+        result = await db.execute(select(Profile))
+        profiles_to_update = result.scalars().all()
+
+        logging.info(f"Scheduler: Found {len(profiles_to_update)} profiles to check for updates.")
+
+        for profile_model in profiles_to_update: # Renamed to avoid conflict with Profile import
+            logging.info(f"Scheduler: Attempting to update profile_id: {profile_model.id} for user_id: {profile_model.user_id}")
+            try:
+                # Call the existing service function to fetch and update
+                # Ensure profile.id is passed correctly (it's already a string from the model)
+                await fetch_and_update_upwork_profile(profile_id=profile_model.id, db=db)
+                logging.info(f"Scheduler: Successfully processed profile_id: {profile_model.id}")
+            except Exception as e:
+                logging.error(f"Scheduler: Error processing profile_id {profile_model.id}: {e}", exc_info=True)
+            # Optional: Add a small delay between processing profiles if needed
+            # await asyncio.sleep(1)
+
+        logging.info("Scheduler: Finished scheduled Upwork profile updates.")
+
+    except Exception as e:
+        logging.error(f"Scheduler: General error in trigger_scheduled_upwork_profile_updates: {e}", exc_info=True)
+    finally:
+        if db:
+            try:
+                await db.close() # Ensure the session is closed
+                logging.info("Scheduler: Database session closed.")
+            except Exception as e:
+                logging.error(f"Scheduler: Error closing database session: {e}", exc_info=True)
