@@ -1,8 +1,10 @@
 import uuid
 from typing import List, Optional
+from datetime import date, datetime, time # Added date, datetime, time
 
 from sqlalchemy.ext.asyncio import AsyncSession # Ensure AsyncSession is imported
 from sqlalchemy.future import select # Ensure select is imported
+# from sqlalchemy import select # Alternative if sqlalchemy.future is not standard
 from fastapi import HTTPException, status
 
 # Remove synchronous Session, use AsyncSession
@@ -110,19 +112,35 @@ class JobService:
         skip: int = 0,
         limit: int = 100,
         upwork_job_id: Optional[str] = None,
-        title_contains: Optional[str] = None
+        title_contains: Optional[str] = None,
+        start_date: Optional[date] = None, # New parameter
+        end_date: Optional[date] = None    # New parameter
     ) -> List[Job]:
-        query = select(Job)
+        stmt = select(Job) # Base statement for async
 
         if upwork_job_id:
-            query = query.where(Job.upwork_job_id == upwork_job_id)
-
+            stmt = stmt.where(Job.upwork_job_id == upwork_job_id)
         if title_contains:
-            query = query.where(Job.title.ilike(f"%{title_contains}%"))
+            stmt = stmt.where(Job.title.ilike(f"%{title_contains}%"))
 
-        query = query.offset(skip).limit(limit)
-        result = await self.db_session.execute(query)
-        return result.scalars().all()
+        if start_date:
+            # Convert start_date (date object) to datetime object at the beginning of the day
+            start_datetime = datetime.combine(start_date, time.min)
+            stmt = stmt.where(Job.posted_time >= start_datetime)
+        if end_date:
+            # Convert end_date (date object) to datetime object at the end of the day (inclusive)
+            end_datetime = datetime.combine(end_date, time.max)
+            stmt = stmt.where(Job.posted_time <= end_datetime)
+
+        # Add default ordering, e.g., by posted_time descending
+        # Ensure .nullslast() if posted_time can be NULL and your DB supports it (PostgreSQL does)
+        stmt = stmt.order_by(Job.posted_time.desc().nullslast())
+
+        stmt = stmt.offset(skip).limit(limit)
+
+        result = await self.db_session.execute(stmt) # Changed from self.db to self.db_session
+        jobs = result.scalars().all()
+        return list(jobs) # Ensure it's a list
 
     async def update_job(self, job_id: uuid.UUID, job_in: JobUpdate) -> Optional[Job]:
         job = await self.get_job(job_id)

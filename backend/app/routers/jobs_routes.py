@@ -1,7 +1,7 @@
 from typing import List, Optional
 import uuid
-
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import date # Added import
+from fastapi import APIRouter, Depends, HTTPException, status, Query # Added Query
 from sqlalchemy.ext.asyncio import AsyncSession # Changed from sqlalchemy.orm import Session
 
 from app.database import get_db # get_db should provide AsyncSession
@@ -78,19 +78,23 @@ async def read_job_endpoint(
 async def read_jobs_endpoint(
     skip: int = 0,
     limit: int = 100,
-    upwork_job_id: Optional[str] = None, # Added filter
-    title_contains: Optional[str] = None, # Added filter
+    upwork_job_id: Optional[str] = Query(None, description="Filter by Upwork job ID"),
+    title_contains: Optional[str] = Query(None, description="Filter by text contained in job title"),
+    startDate: Optional[date] = Query(None, description="Start date for job posting (YYYY-MM-DD)"), # New
+    endDate: Optional[date] = Query(None, description="End date for job posting (YYYY-MM-DD)"),     # New
     job_service: JobService = Depends(get_job_service)
 ):
     """
     Retrieve a list of jobs with optional filters.
-    Filters include `upwork_job_id` and `title_contains`.
+    Filters include `upwork_job_id`, `title_contains`, `startDate`, and `endDate`.
     """
     jobs = await job_service.get_jobs(
         skip=skip,
         limit=limit,
         upwork_job_id=upwork_job_id,
-        title_contains=title_contains
+        title_contains=title_contains,
+        start_date=startDate, # Pass new parameter
+        end_date=endDate    # Pass new parameter
     )
     return jobs
 
