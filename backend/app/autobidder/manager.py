@@ -1,72 +1,62 @@
 # app/autobidder/manager.py
 import asyncio
 import logging
-from app.services.autobidder_settings_service import get_enabled_autobid_settings
-from app.browser.browser_bidder import run_browser_bidder_for_profile
+import random # Added random
+from sqlalchemy.ext.asyncio import AsyncSession # Added AsyncSession for type hints
+from app.database import AsyncSessionLocal # For creating a session
+from app.services.autobidder_settings_service import get_enabled_autobid_settings # Import the refactored service
+from app.browser.browser_bidder import run_browser_bidder_for_profile # Import the bidder function
 
-queue = asyncio.Queue()
+logger = logging.getLogger(__name__) # Use module-level logger
 
-async def enqueue_profiles():
-    logging.info("[QUEUE] Getting autobidder settings...")
+# Old queue-based logic removed/commented out:
+# queue = asyncio.Queue()
+# async def enqueue_profiles(): ...
+# async def worker(worker_id: int): ...
+# async def start_autobidder_loop(): ...
+
+
+async def trigger_autobid_for_active_profiles_task():
+    """
+    Task function to be called by APScheduler.
+    Fetches active autobid profiles and runs the browser bidder for each.
+    """
+    logger.info("Starting scheduled autobid task for active profiles...")
+    db: AsyncSession = AsyncSessionLocal()
     try:
-        settings_list = await asyncio.to_thread(get_enabled_autobid_settings)
-        count = 0
-        for setting in settings_list:
-            await queue.put(setting.profile_id)
-            count += 1
-        logging.info(f"[QUEUE] Added {count} profiles to the queue.")
-    except Exception as e:
-        logging.error(f"[QUEUE] Error getting settings or adding to queue: {e}", exc_info=True)
+        # get_enabled_autobid_settings is now async and takes AsyncSession
+        active_settings_list = await get_enabled_autobid_settings(db)
 
+        if not active_settings_list:
+            logger.info("No active autobid profiles found.")
+            return
 
-async def worker(worker_id: int):
-    logging.info(f"[WORKER {worker_id}] Started.")
-    while True:
-        profile_id = None
-        try:
-            profile_id = await queue.get()
-            logging.info(f"[WORKER {worker_id}] Got profile {profile_id} from queue.")
+        logger.info(f"Found {len(active_settings_list)} active autobid profile(s) to process.")
 
-            logging.info(f"[WORKER {worker_id}] Starting processing for profile {profile_id}...")
-            await asyncio.to_thread(run_browser_bidder_for_profile, profile_id)
-            logging.info(f"[WORKER {worker_id}] Finished processing for profile {profile_id}.")
+        for setting in active_settings_list:
+            # Ensure profile_id is string if expected by run_browser_bidder_for_profile
+            # The AutobidSettings model likely has profile_id as string or UUID.
+            # run_browser_bidder_for_profile expects str.
+            profile_id = str(setting.profile_id)
 
-        except asyncio.CancelledError:
-            logging.info(f"[WORKER {worker_id}] Cancellation signal received, stopping...")
-            break
-        except Exception as e:
-            if profile_id:
-                logging.error(f"[WORKER {worker_id}] Error processing profile {profile_id}: {e}", exc_info=True)
-            else:
-                logging.error(f"[WORKER {worker_id}] Error getting job from queue: {e}", exc_info=True)
-            await asyncio.sleep(5)
-        finally:
-            if profile_id is not None:
-                queue.task_done()
-                logging.debug(f"[WORKER {worker_id}] Task done for profile {profile_id}.")
+            logger.info(f"Processing autobid for profile_id: {profile_id}")
+            try:
+                # run_browser_bidder_for_profile now takes AsyncSession
+                await run_browser_bidder_for_profile(profile_id=profile_id, db=db)
+                logger.info(f"Successfully finished autobid processing for profile_id: {profile_id}")
+            except Exception as e:
+                logger.error(f"Error during autobid processing for profile_id {profile_id}: {e}", exc_info=True)
 
+            # Optional: Short delay between profiles if running sequentially and there are multiple profiles
+            if len(active_settings_list) > 1:
+                sleep_duration = random.randint(5, 15)
+                logger.info(f"Processed profile {profile_id}. Sleeping for {sleep_duration}s before next profile.")
+                await asyncio.sleep(sleep_duration)
 
-async def start_autobidder_loop():
-    logging.info("[INIT] Starting autobidder loop...")
-    try:
-        enqueue_task = asyncio.create_task(enqueue_profiles())
-
-        num_workers = 1
-        workers = [asyncio.create_task(worker(i)) for i in range(num_workers)]
-
-        await enqueue_task
-
-        logging.info("[MANAGER] Waiting for queue processing...")
-        await queue.join()
-        logging.info("[MANAGER] Queue processing finished.")
-
-        logging.info("[MANAGER] Cancelling workers...")
-        for w in workers:
-            w.cancel()
-        await asyncio.gather(*workers, return_exceptions=True)
-        logging.info("[MANAGER] Workers finished.")
+        logger.info("Finished processing all active autobid profiles.")
 
     except Exception as e:
-        logging.error(f"[MANAGER] Critical error in autobidder loop: {e}", exc_info=True)
-
-    logging.info("[DONE] Autobidder loop finished.")
+        logger.error(f"Critical error in trigger_autobid_for_active_profiles_task: {e}", exc_info=True)
+    finally:
+        await db.close()
+        logger.info("Database session closed for autobid task.")
